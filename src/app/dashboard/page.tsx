@@ -292,6 +292,32 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Tools Section */}
+        <div className="mt-10 mb-2">
+          <h2 className="text-xl font-black mb-1">Financial Tools</h2>
+          <p className="text-gray-500 text-sm mb-5">Know where you stand. Take action.</p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <Link href="/inflation" className="group bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-2xl p-5 transition-all duration-200">
+              <div className="text-3xl mb-3">🧮</div>
+              <h3 className="font-bold text-gray-200 group-hover:text-white transition-colors">Inflation Calculator</h3>
+              <p className="text-gray-500 text-sm mt-1 leading-relaxed">See exactly how much more you&apos;re paying vs 2023. The number might shock you.</p>
+              <div className="mt-3 text-red-400 text-xs font-semibold group-hover:text-red-300 transition-colors">Calculate my cost →</div>
+            </Link>
+            <Link href="/emergency-fund" className="group bg-white/5 hover:bg-orange-500/10 border border-white/10 hover:border-orange-500/30 rounded-2xl p-5 transition-all duration-200">
+              <div className="text-3xl mb-3">🏦</div>
+              <h3 className="font-bold text-gray-200 group-hover:text-white transition-colors">Emergency Fund</h3>
+              <p className="text-gray-500 text-sm mt-1 leading-relaxed">Build your 1-month safety net. Most Americans have less than $400 saved.</p>
+              <div className="mt-3 text-orange-400 text-xs font-semibold group-hover:text-orange-300 transition-colors">Start the challenge →</div>
+            </Link>
+            <Link href="/recession-proof" className="group bg-white/5 hover:bg-yellow-500/10 border border-white/10 hover:border-yellow-500/30 rounded-2xl p-5 transition-all duration-200">
+              <div className="text-3xl mb-3">🛡️</div>
+              <h3 className="font-bold text-gray-200 group-hover:text-white transition-colors">Recession-Proof Score</h3>
+              <p className="text-gray-500 text-sm mt-1 leading-relaxed">10-question quiz. Get your score out of 100. Specific actions to improve.</p>
+              <div className="mt-3 text-yellow-400 text-xs font-semibold group-hover:text-yellow-300 transition-colors">Take the quiz →</div>
+            </Link>
+          </div>
+        </div>
+
         {/* Stats row */}
         {challenges.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mt-8">
