@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Flame, Video, Copy, Check, ChevronDown, Calendar, Sparkles, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-const PLATFORMS = ["TikTok", "Instagram Reels", "Facebook Reels"] as const;
+const PLATFORMS = ["TikTok", "Instagram Reels", "Facebook Reels", "YouTube Shorts"] as const;
 type Platform = typeof PLATFORMS[number];
 
 const TOPICS = [
@@ -31,13 +31,37 @@ const PLATFORM_NOTES: Record<Platform, string> = {
   TikTok: "🎵 Use trending audio. Post 6-9pm. Add text overlay on hook.",
   "Instagram Reels": "📸 Use Reels, not Stories. Add location tag. First frame = thumbnail.",
   "Facebook Reels": "👥 Post to Facebook Groups too. Longer captions work. Tag relevant pages.",
+  "YouTube Shorts": "▶️ Keep it under 60 sec. Add chapters. First 3 seconds must hook. Use 3-5 hashtags max. Best times: 12pm & 8pm. Title must include a keyword like 'save money' or 'inflation hack'.",
 };
 
 const PLATFORM_HASHTAGS: Record<Platform, string[]> = {
   TikTok: ["#moneytok", "#savingmoney", "#personalfinance", "#financetok", "#moneyhacks", "#frugalliving", "#savingchallenge", "#moneyadvice", "#budgeting", "#stackstreak", "#savingsgoals", "#inflation", "#financialfreedom", "#moneymindset", "#groceryhaul"],
   "Instagram Reels": ["#personalfinance", "#savingmoney", "#financialfreedom", "#moneytips", "#budgetlife", "#frugaltips", "#savingschallenge", "#stackstreak", "#moneygoals", "#debtfree", "#financialindependence", "#moneymotivation", "#savingsaccount", "#budgeting101", "#moneyhacks"],
   "Facebook Reels": ["#savingmoney", "#moneytips", "#personalfinance", "#budgeting", "#frugalliving", "#financialtips", "#moneysaving", "#stackstreak", "#savingsgoals", "#inflation", "#grocerysavings", "#familybudget", "#moneyhacks", "#financialwellness", "#savingsapp"],
+  "YouTube Shorts": ["#shorts", "#savemoney", "#personalfinance", "#moneyhacks", "#inflation", "#budgeting", "#financialfreedom", "#savingschallenge", "#stackstreak", "#moneytips", "#frugalliving", "#emergencyfund", "#savingsgoals", "#moneyadvice", "#youtubeshorts"],
 };
+
+const YOUTUBE_DURATIONS = ["30", "45", "60"] as const;
+
+const YOUTUBE_TITLE_TEMPLATES = [
+  "I saved ${amount} doing this one thing 🔥 #shorts",
+  "Inflation is stealing from you — here's how to fight back #shorts",
+  "The savings hack nobody talks about #shorts",
+  "How to save $1,000 in 90 days (it works) #shorts",
+  "Cancel these subscriptions RIGHT NOW #shorts",
+  "Why you're broke (it's not your salary) #shorts",
+];
+
+const YOUTUBE_DESCRIPTION_TEMPLATE = `📱 Try StackStreak FREE → https://stackstreak-two.vercel.app
+
+The free app that turns saving money into a daily game with streaks, challenges, and AI tips.
+
+⬇️ More Resources:
+→ Inflation Calculator: https://stackstreak-two.vercel.app/inflation
+→ Recession-Proof Score: https://stackstreak-two.vercel.app/recession-proof
+→ Emergency Fund Builder: https://stackstreak-two.vercel.app/emergency-fund
+
+#savemoney #personalfinance #inflation #shorts`;
 
 const CONTENT_CALENDAR = [
   { day: 1, topic: "Inflation is stealing from you", platform: "TikTok", time: "6:00 PM" },
@@ -67,6 +91,10 @@ type ScriptData = {
   cta: string;
   caption: string;
   hashtags: string[];
+  // YouTube Shorts extras
+  title?: string;
+  description?: string;
+  thumbnail_text?: string;
 };
 
 function CopyButton({ text }: { text: string }) {
@@ -133,6 +161,7 @@ export default function ScriptsPage() {
     TikTok: "from-pink-500 to-cyan-400",
     "Instagram Reels": "from-purple-500 to-pink-400",
     "Facebook Reels": "from-blue-500 to-indigo-400",
+    "YouTube Shorts": "from-red-500 to-red-600",
   };
 
   return (
@@ -227,7 +256,7 @@ export default function ScriptsPage() {
                           : "bg-white/5 text-gray-400 hover:text-white border border-white/10"
                       }`}
                     >
-                      {p === "TikTok" ? "🎵 TikTok" : p === "Instagram Reels" ? "📸 Instagram" : "👥 Facebook"}
+                      {p === "TikTok" ? "🎵 TikTok" : p === "Instagram Reels" ? "📸 Instagram" : p === "Facebook Reels" ? "👥 Facebook" : "▶️ YouTube"}
                     </button>
                   ))}
                 </div>
@@ -412,6 +441,59 @@ export default function ScriptsPage() {
                         <span key={i} className="bg-white/10 text-gray-300 px-3 py-1 rounded-full text-xs font-medium">{tag}</span>
                       ))}
                     </div>
+                  </div>
+
+                  {/* YouTube Shorts specific extras */}
+                  {platform === "YouTube Shorts" && (
+                    <>
+                      {script.title && (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-5">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-bold text-red-400">▶️ VIDEO TITLE</span>
+                            <CopyButton text={script.title} />
+                          </div>
+                          <p className="text-white font-semibold">{script.title}</p>
+                        </div>
+                      )}
+
+                      {script.thumbnail_text && (
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-5">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-bold text-yellow-400">🖼️ THUMBNAIL TEXT</span>
+                            <CopyButton text={script.thumbnail_text} />
+                          </div>
+                          <p className="text-white font-black text-2xl uppercase tracking-wide">{script.thumbnail_text}</p>
+                          <p className="text-gray-500 text-xs mt-2">Put this in bold on a high-contrast background</p>
+                        </div>
+                      )}
+
+                      {script.description && (
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-bold text-green-400">📄 VIDEO DESCRIPTION</span>
+                            <CopyButton text={script.description} />
+                          </div>
+                          <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">{script.description}</pre>
+                        </div>
+                      )}
+
+                      <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                        <p className="text-sm font-bold text-gray-400 mb-3">⚡ YOUTUBE SHORTS CHECKLIST</p>
+                        <div className="space-y-2 text-sm text-gray-300">
+                          {["Vertical 9:16 ratio (1080x1920)", "Under 60 seconds", "Add #shorts to title and description", "Hook in first 3 seconds", "Text overlay on opening frame", "Upload between 12pm–3pm or 7pm–9pm", "Add to a Shorts playlist", "Reply to every comment in first hour"].map((item, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded border border-gray-600 shrink-0" />
+                              <span>{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Platform tips */}
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <p className="text-xs text-gray-400">{PLATFORM_NOTES[platform]}</p>
                   </div>
                 </div>
               )}

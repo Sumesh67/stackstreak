@@ -17,6 +17,7 @@ const PLATFORM_TONES: Record<string, string> = {
   TikTok: "Use Gen Z/millennial slang, fast-paced, very casual, trend-aware. Short punchy sentences.",
   "Instagram Reels": "Slightly more polished but still relatable. Inspirational tone. Use emojis freely.",
   "Facebook Reels": "Conversational, slightly older audience (25-45). More detail-oriented. Warmer tone.",
+  "YouTube Shorts": "Clear and direct. YouTube audience expects slightly more depth even in short format. Include a strong verbal hook in first 3 seconds. End with a clear subscribe/link CTA. Speak confidently like a knowledgeable friend. Include ONE specific number or stat. Script should be readable as a voiceover — no text-only jokes.",
 };
 
 export async function POST(req: NextRequest) {
@@ -29,20 +30,26 @@ export async function POST(req: NextRequest) {
 
   const platformTone = PLATFORM_TONES[platform] || PLATFORM_TONES["TikTok"];
 
+  const isYouTube = platform === "YouTube Shorts";
+  const extraYouTubeFields = isYouTube ? `
+- title: a click-worthy YouTube title under 70 chars (include a number or power word, end with #shorts)
+- description: a full YouTube description with links to stackstreak-two.vercel.app and the tools pages (/inflation, /recession-proof, /emergency-fund), 3-5 hashtags at bottom
+- thumbnail_text: 3-5 words max for the thumbnail text overlay (high contrast, bold, curiosity-driven)` : "";
+
   const prompt = `You are a viral short-form video scriptwriter specializing in personal finance content. Generate a ${duration}-second ${platform} script about '${topic}' for an app called StackStreak (a free savings challenge app that helps people save money with streaks and gamification — stackstreak-two.vercel.app).
 
 Hook style: ${hookStyle}
 Platform tone: ${platformTone}
 
 Format your response as JSON with these exact keys:
-- hook: the opening 1-2 sentences (must stop the scroll)
+- hook: the opening 1-2 sentences (must stop the scroll / hook viewer in first 3 seconds)
 - story: the problem/setup (2-3 sentences)
 - value: the main tip or content (3-5 sentences, specific and actionable)
 - cta: call to action for StackStreak (1-2 sentences)
-- caption: social media caption for ${platform} (2-3 sentences + emojis)
-- hashtags: array of 15 relevant hashtags for ${platform}
+- caption: ${isYouTube ? "short video caption/post description" : `social media caption for ${platform}`} (2-3 sentences + emojis)
+- hashtags: array of ${isYouTube ? "5" : "15"} relevant hashtags for ${platform}${extraYouTubeFields}
 
-Make it conversational, relatable, specific. No corporate speak. Talk like a real person who figured something out and wants to share it. Return ONLY valid JSON, no markdown.`;
+Make it conversational, relatable, specific. No corporate speak. Talk like a real person who figured something out and wants to share it. ${isYouTube ? "Write as a voiceover script — every word will be spoken aloud." : ""} Return ONLY valid JSON, no markdown.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
