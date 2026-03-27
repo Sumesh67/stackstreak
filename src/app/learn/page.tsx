@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useRef, useEffect } from "react";
 import { VIDEOS, VIDEO_CATEGORIES } from "@/lib/videos-data";
-import { Flame, Play, Heart, Share2, Bookmark, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
+import { Flame, Play, Heart, Share2, Bookmark, ChevronUp, ChevronDown, ExternalLink, Video, Tag } from "lucide-react";
 import Link from "next/link";
 
 export default function LearnPage() {
@@ -74,6 +74,8 @@ export default function LearnPage() {
           <Link href="/missions" className="text-gray-400 hover:text-white transition-colors">Missions</Link>
           <Link href="/tips" className="text-gray-400 hover:text-white transition-colors">Tips</Link>
           <span className="text-orange-400 font-semibold">Learn</span>
+          <Link href="/scripts" className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"><Video className="w-4 h-4" /> Scripts</Link>
+          <Link href="/deals" className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"><Tag className="w-4 h-4" /> Deals</Link>
         </div>
       </nav>
 

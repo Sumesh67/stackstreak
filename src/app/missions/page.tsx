@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { WEEKLY_MISSIONS, TIPS_CATEGORIES, type Mission } from "@/lib/tips-data";
-import { Flame, CheckCircle, Circle, Trophy, ChevronRight, X, Zap } from "lucide-react";
+import { Flame, CheckCircle, Circle, Trophy, ChevronRight, X, Zap, Video, Tag } from "lucide-react";
 import Link from "next/link";
 
 export default function MissionsPage() {
@@ -68,6 +68,8 @@ export default function MissionsPage() {
           <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Dashboard</Link>
           <span className="text-orange-400 font-semibold">Missions</span>
           <Link href="/tips" className="text-gray-400 hover:text-white transition-colors">Tips</Link>
+          <Link href="/scripts" className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"><Video className="w-4 h-4" /> Scripts</Link>
+          <Link href="/deals" className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"><Tag className="w-4 h-4" /> Deals</Link>
         </div>
       </nav>
 

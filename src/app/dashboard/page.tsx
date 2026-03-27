@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Flame, Trophy, Plus, CheckCircle, Zap, TrendingUp, LogOut, BookOpen, Target, Play } from "lucide-react";
+import { Flame, Trophy, Plus, CheckCircle, Zap, TrendingUp, LogOut, BookOpen, Target, Play, Video, Tag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -174,6 +174,12 @@ export default function DashboardPage() {
           </Link>
           <Link href="/learn" className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors">
             <Play className="w-4 h-4" /> Learn
+          </Link>
+          <Link href="/scripts" className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors">
+            <Video className="w-4 h-4" /> Scripts
+          </Link>
+          <Link href="/deals" className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors">
+            <Tag className="w-4 h-4" /> Deals
           </Link>
           <span className="text-gray-600 text-sm hidden sm:block">Hey, {displayName} 👋</span>
           <button onClick={signOut} className="text-gray-500 hover:text-white transition-colors">
