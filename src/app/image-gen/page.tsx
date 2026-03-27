@@ -17,6 +17,7 @@ type PostData = {
   platform: string;
   bestTime: string;
   topic: string;
+  trendSource?: string;
 };
 
 type TemplateId = "tip" | "stat" | "challenge" | "inflation" | "story";
@@ -716,6 +717,8 @@ export default function ImageGenPage() {
   const [fields, setFields] = useState<TemplateFields>(TEMPLATES[0].defaults);
   const [weekPosts, setWeekPosts] = useState<PostData[] | null>(null);
   const [generatingWeek, setGeneratingWeek] = useState(false);
+  const [trendingPosts, setTrendingPosts] = useState<PostData[] | null>(null);
+  const [generatingTrending, setGeneratingTrending] = useState(false);
 
   // When template changes, load defaults and reset size
   const handleTemplateChange = (t: Template) => {
@@ -768,6 +771,23 @@ export default function ImageGenPage() {
       console.error("Failed to generate week:", err);
     } finally {
       setGeneratingWeek(false);
+    }
+  };
+
+  const generateTrending = async () => {
+    setGeneratingTrending(true);
+    try {
+      const res = await fetch("/api/trending-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      setTrendingPosts(data);
+    } catch (err) {
+      console.error("Failed to fetch trending:", err);
+    } finally {
+      setGeneratingTrending(false);
     }
   };
 
@@ -990,6 +1010,96 @@ export default function ImageGenPage() {
           {!generatingWeek && !weekPosts && (
             <p className="text-xs text-gray-600 text-center py-2">
               Click "Generate Week" to create 7 unique social posts instantly
+            </p>
+          )}
+        </div>
+
+        {/* ── TRENDING NOW ── */}
+        <div className="mb-8 p-5 bg-white/[0.04] border border-red-500/20 rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-black text-lg flex items-center gap-2">
+                <span className="text-xl">🔥</span>
+                Trending Now
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Post ideas based on today&apos;s finance news — always timely
+              </p>
+            </div>
+            <button
+              onClick={generateTrending}
+              disabled={generatingTrending}
+              className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl font-bold text-sm transition-all shadow-lg shadow-red-500/20 flex items-center gap-2"
+            >
+              {generatingTrending ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Crawling news...
+                </>
+              ) : (
+                <>
+                  🔥 {trendingPosts ? "Refresh Trends" : "Get Trending Ideas"}
+                </>
+              )}
+            </button>
+          </div>
+
+          {(generatingTrending || trendingPosts) && (
+            <div className="overflow-x-auto pb-2 -mx-1 px-1">
+              <div className="flex gap-3" style={{ minWidth: "max-content" }}>
+                {generatingTrending
+                  ? Array.from({ length: 7 }).map((_, i) => (
+                      <div key={i} className="w-[200px] shrink-0 bg-white/5 border border-white/10 rounded-xl p-3 animate-pulse">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-full bg-red-500/30" />
+                          <div className="h-4 w-20 bg-white/10 rounded" />
+                        </div>
+                        <div className="h-3 w-full bg-white/10 rounded mb-1.5" />
+                        <div className="h-3 w-4/5 bg-white/10 rounded mb-3" />
+                        <div className="h-7 w-full bg-white/10 rounded-lg" />
+                      </div>
+                    ))
+                  : trendingPosts!.map((post) => {
+                      const topicClass = TOPIC_COLORS[post.topic] ?? "bg-gray-500/20 text-gray-300 border-gray-500/30";
+                      return (
+                        <div key={post.day} className="w-[210px] shrink-0 bg-white/[0.05] border border-red-500/20 hover:border-red-500/40 rounded-xl p-3 flex flex-col transition-colors">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                              {post.day}
+                            </div>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${topicClass} truncate`}>
+                              {post.topic}
+                            </span>
+                          </div>
+                          <p className="text-xs font-semibold text-white leading-tight mb-1 line-clamp-2 flex-1">
+                            {post.headline}
+                          </p>
+                          {post.trendSource && (
+                            <p className="text-[10px] text-gray-600 italic mb-2 line-clamp-1">
+                              📰 {post.trendSource}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1 mb-2">
+                            <span className="text-[10px] bg-white/10 rounded px-1.5 py-0.5 text-gray-400 flex items-center gap-0.5">
+                              <Clock className="w-2.5 h-2.5" />{post.bestTime}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => usePost(post)}
+                            className="w-full py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-300 text-xs font-bold transition-colors"
+                          >
+                            Use →
+                          </button>
+                        </div>
+                      );
+                    })}
+              </div>
+            </div>
+          )}
+
+          {!generatingTrending && !trendingPosts && (
+            <p className="text-xs text-gray-600 text-center py-2">
+              Crawls finance news feeds and generates post ideas based on what&apos;s trending today
             </p>
           )}
         </div>
