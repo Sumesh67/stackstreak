@@ -179,6 +179,7 @@ export default function ScriptsPage() {
           <Link href="/deals" className="text-gray-400 hover:text-white transition-colors">Deals</Link>
           <Link href="/missions" className="text-gray-400 hover:text-white transition-colors">Missions</Link>
           <Link href="/tips" className="text-gray-400 hover:text-white transition-colors">Tips</Link>
+          <Link href="/image-gen" className="text-gray-400 hover:text-white transition-colors">Image Gen</Link>
         </div>
       </nav>
 
