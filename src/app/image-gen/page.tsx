@@ -3,10 +3,21 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Flame, Download, ArrowLeft, Image as ImageIcon, Sliders } from "lucide-react";
+import { Flame, Download, ArrowLeft, Image as ImageIcon, Sliders, Sparkles, Clock, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type PostData = {
+  day: number;
+  template: "tip" | "stat" | "challenge" | "alert" | "story";
+  headline: string;
+  stat: string;
+  body: string;
+  platform: string;
+  bestTime: string;
+  topic: string;
+};
 
 type TemplateId = "tip" | "stat" | "challenge" | "inflation" | "story";
 type ColorScheme = "orange" | "dark" | "red" | "green";
@@ -696,12 +707,15 @@ function drawCard(
 
 export default function ImageGenPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasAreaRef = useRef<HTMLDivElement>(null);
 
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("tip");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("orange");
   const [sizeMode, setSizeMode] = useState<SizeMode>("square");
   const [fontSize, setFontSize] = useState(52);
   const [fields, setFields] = useState<TemplateFields>(TEMPLATES[0].defaults);
+  const [weekPosts, setWeekPosts] = useState<PostData[] | null>(null);
+  const [generatingWeek, setGeneratingWeek] = useState(false);
 
   // When template changes, load defaults and reset size
   const handleTemplateChange = (t: Template) => {
@@ -738,6 +752,79 @@ export default function ImageGenPage() {
 
   const updateField = (key: keyof TemplateFields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const generateWeek = async () => {
+    setGeneratingWeek(true);
+    try {
+      const res = await fetch("/api/generate-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: 7 }),
+      });
+      const data = await res.json();
+      setWeekPosts(data);
+    } catch (err) {
+      console.error("Failed to generate week:", err);
+    } finally {
+      setGeneratingWeek(false);
+    }
+  };
+
+  const usePost = (post: PostData) => {
+    // Map post template to TemplateId (alert → inflation, others match)
+    const templateMap: Record<string, TemplateId> = {
+      tip: "tip",
+      stat: "stat",
+      challenge: "challenge",
+      alert: "inflation",
+      story: "story",
+    };
+    const tid = templateMap[post.template] ?? "tip";
+    const tmpl = TEMPLATES.find((t) => t.id === tid)!;
+    setSelectedTemplate(tid);
+    setSizeMode(tmpl.defaultSize);
+    if (tid === "story") setFontSize(56);
+    else setFontSize(52);
+
+    if (tid === "stat") {
+      setFields({ ...tmpl.defaults, stat: post.stat, statLabel: "per month", body: post.body, headline: post.headline });
+    } else if (tid === "challenge") {
+      setFields({ ...tmpl.defaults, body: post.body, headline: post.headline });
+    } else {
+      setFields({ ...tmpl.defaults, headline: post.headline, body: post.body });
+    }
+
+    canvasAreaRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const downloadAll = async () => {
+    if (!weekPosts) return;
+    for (const post of weekPosts) {
+      usePost(post);
+      await new Promise((r) => setTimeout(r, 600));
+      handleDownload();
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  };
+
+  const TOPIC_COLORS: Record<string, string> = {
+    inflation: "bg-red-500/20 text-red-300 border-red-500/30",
+    subscriptions: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+    groceries: "bg-green-500/20 text-green-300 border-green-500/30",
+    savings: "bg-green-500/20 text-green-300 border-green-500/30",
+    bills: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    food: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+    mindset: "bg-violet-500/20 text-violet-300 border-violet-500/30",
+    shopping: "bg-pink-500/20 text-pink-300 border-pink-500/30",
+  };
+
+  const TEMPLATE_ICON: Record<string, string> = {
+    tip: "💡",
+    stat: "📊",
+    challenge: "🏆",
+    alert: "🚨",
+    story: "📱",
   };
 
   const currentTemplate = TEMPLATES.find((t) => t.id === selectedTemplate)!;
@@ -782,7 +869,132 @@ export default function ImageGenPage() {
           </p>
         </div>
 
-        <div className="flex gap-8 items-start">
+        {/* ── AUTO-GENERATE WEEK ── */}
+        <div className="mb-8 p-5 bg-white/[0.04] border border-white/10 rounded-2xl">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-black text-lg flex items-center gap-2">
+                <Sparkles className="text-orange-400 w-5 h-5" />
+                Auto-Generate Week
+              </h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Generate 7 ready-to-post cards with AI — one click, full week
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {weekPosts && (
+                <button
+                  onClick={downloadAll}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <Download className="w-4 h-4" />
+                  Download All
+                </button>
+              )}
+              <button
+                onClick={generateWeek}
+                disabled={generatingWeek}
+                className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl font-bold text-sm transition-all shadow-lg shadow-orange-500/20 flex items-center gap-2"
+              >
+                {generatingWeek ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Generating…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    {weekPosts ? "Regenerate Week" : "Generate Week"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Skeleton or cards */}
+          {(generatingWeek || weekPosts) && (
+            <div className="overflow-x-auto pb-2 -mx-1 px-1">
+              <div className="flex gap-3" style={{ minWidth: "max-content" }}>
+                {generatingWeek
+                  ? Array.from({ length: 7 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-[200px] shrink-0 bg-white/5 border border-white/10 rounded-xl p-3 animate-pulse"
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-full bg-orange-500/30" />
+                          <div className="h-4 w-20 bg-white/10 rounded" />
+                        </div>
+                        <div className="h-3 w-full bg-white/10 rounded mb-1.5" />
+                        <div className="h-3 w-4/5 bg-white/10 rounded mb-3" />
+                        <div className="flex gap-1 mb-3">
+                          <div className="h-5 w-12 bg-white/10 rounded" />
+                          <div className="h-5 w-16 bg-white/10 rounded" />
+                        </div>
+                        <div className="h-7 w-full bg-white/10 rounded-lg" />
+                      </div>
+                    ))
+                  : weekPosts!.map((post) => {
+                      const topicClass =
+                        TOPIC_COLORS[post.topic] ?? "bg-gray-500/20 text-gray-300 border-gray-500/30";
+                      return (
+                        <div
+                          key={post.day}
+                          className="w-[200px] shrink-0 bg-white/[0.05] border border-white/10 hover:border-orange-500/30 rounded-xl p-3 flex flex-col transition-colors"
+                        >
+                          {/* Day circle + topic */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+                              {post.day}
+                            </div>
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${topicClass} truncate`}
+                            >
+                              {post.topic}
+                            </span>
+                          </div>
+
+                          {/* Headline */}
+                          <p className="text-xs font-semibold text-white leading-tight mb-2 line-clamp-2 flex-1">
+                            {post.headline}
+                          </p>
+
+                          {/* Template + platform + time row */}
+                          <div className="flex items-center gap-1 mb-2 flex-wrap">
+                            <span className="text-[10px] bg-white/10 rounded px-1.5 py-0.5 text-gray-400">
+                              {TEMPLATE_ICON[post.template]} {post.template}
+                            </span>
+                            <span className="text-[10px] bg-white/10 rounded px-1.5 py-0.5 text-gray-400 flex items-center gap-0.5">
+                              <Clock className="w-2.5 h-2.5" />
+                              {post.bestTime}
+                            </span>
+                          </div>
+
+                          {/* Platform */}
+                          <p className="text-[10px] text-gray-500 mb-2">{post.platform}</p>
+
+                          {/* Use button */}
+                          <button
+                            onClick={() => usePost(post)}
+                            className="w-full py-1.5 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 rounded-lg text-orange-300 text-xs font-bold transition-colors"
+                          >
+                            Use →
+                          </button>
+                        </div>
+                      );
+                    })}
+              </div>
+            </div>
+          )}
+
+          {!generatingWeek && !weekPosts && (
+            <p className="text-xs text-gray-600 text-center py-2">
+              Click "Generate Week" to create 7 unique social posts instantly
+            </p>
+          )}
+        </div>
+
+        <div ref={canvasAreaRef} className="flex gap-8 items-start">
           {/* ── LEFT PANEL ── */}
           <div className="w-[380px] shrink-0 space-y-5">
             {/* Template selector */}
