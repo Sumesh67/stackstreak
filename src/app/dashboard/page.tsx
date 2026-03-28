@@ -184,6 +184,9 @@ export default function DashboardPage() {
           <Link href="/image-gen" className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors">
             <ImageIcon className="w-4 h-4" /> Image Gen
           </Link>
+          <Link href="/pro" className="flex items-center gap-1 text-orange-400 border border-orange-500/30 hover:bg-orange-500/10 px-3 py-1 rounded-full text-xs font-semibold transition-colors">
+            Go Pro 🔥
+          </Link>
           <span className="text-gray-600 text-sm hidden sm:block">Hey, {displayName} 👋</span>
           <button onClick={signOut} className="text-gray-500 hover:text-white transition-colors">
             <LogOut className="w-5 h-5" />
@@ -347,6 +350,23 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Pro Upgrade Banner */}
+        <div className="mt-8 bg-gradient-to-r from-orange-500/10 to-yellow-500/5 border border-orange-500/20 rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="font-semibold text-sm text-white">Upgrade to Pro for streak shields &amp; unlimited challenges</p>
+              <p className="text-gray-500 text-xs mt-0.5">Only $7.99/mo — cancel anytime</p>
+            </div>
+          </div>
+          <Link
+            href="/pro"
+            className="shrink-0 bg-orange-500 hover:bg-orange-400 px-4 py-2 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap"
+          >
+            Upgrade Now →
+          </Link>
+        </div>
       </div>
 
       {/* New Challenge Modal */}

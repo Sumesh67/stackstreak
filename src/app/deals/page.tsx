@@ -29,7 +29,7 @@ const DEALS: Deal[] = [
     savings: "$5 + up to 10% back",
     howToGet: "Download the Ibotta app and scan any grocery receipt",
     expires: "Ongoing",
-    url: "https://ibotta.com",
+    url: "https://ibotta.com/register?invite=stackstreak",
     category: "Groceries",
   },
   {
@@ -40,7 +40,7 @@ const DEALS: Deal[] = [
     savings: "$1 (1000 pts) per receipt",
     howToGet: "Snap any grocery receipt in the Fetch app",
     expires: "Ongoing",
-    url: "https://fetchrewards.com",
+    url: "https://fetch.com",
     category: "Groceries",
   },
   {
@@ -88,6 +88,7 @@ const DEALS: Deal[] = [
     url: "https://gasbuddy.com",
     category: "Gas",
   },
+
   {
     id: "upside",
     title: "Upside App: Cash Back on Gas",
@@ -197,7 +198,7 @@ const DEALS: Deal[] = [
     savings: "Avg $10–$30 per order",
     howToGet: "Add the Honey browser extension — works automatically at checkout",
     expires: "Ongoing",
-    url: "https://joinhoney.com",
+    url: "https://www.joinhoney.com/ref/stackstreak",
     category: "Shopping",
   },
   {
@@ -208,7 +209,7 @@ const DEALS: Deal[] = [
     savings: "1–40% cash back at 3,500+ stores",
     howToGet: "Sign up at rakuten.com, shop through their portal or browser extension",
     expires: "Ongoing",
-    url: "https://rakuten.com",
+    url: "https://www.rakuten.com/r/STACKSTREAK",
     category: "Shopping",
   },
   {
@@ -376,6 +377,11 @@ export default function DealsPage() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Affiliate Disclosure */}
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 mb-6 text-sm text-gray-400">
+          💡 Some links may be affiliate links — we earn a small commission if you sign up, at no extra cost to you. This helps keep StackStreak free!
+        </div>
+
         {/* Header */}
         <div className="flex items-start justify-between mb-2">
           <div>
