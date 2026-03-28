@@ -26,19 +26,19 @@ const DEALS: Deal[] = [
     title: "Ibotta: $5 Welcome Bonus + Cash Back",
     store: "Ibotta",
     emoji: "💰",
-    savings: "$5 + up to 10% back",
-    howToGet: "Download the Ibotta app and scan any grocery receipt",
+    savings: "$5 welcome + up to 10% back",
+    howToGet: "Download Ibotta → sign up → scan your first grocery receipt. Share YOUR invite link from the app and earn $5 for every friend who joins.",
     expires: "Ongoing",
-    url: "https://ibotta.com/register?invite=stackstreak",
+    url: "https://ibotta.com",
     category: "Groceries",
   },
   {
     id: "fetch",
-    title: "Fetch Rewards: 1000 Points on Any Receipt",
+    title: "Fetch Rewards: Earn on Every Receipt",
     store: "Fetch Rewards",
     emoji: "🧾",
-    savings: "$1 (1000 pts) per receipt",
-    howToGet: "Snap any grocery receipt in the Fetch app",
+    savings: "Points on every receipt",
+    howToGet: "Download Fetch → snap any receipt → earn points. Share YOUR referral code from the app — both you and your friend get bonus points.",
     expires: "Ongoing",
     url: "https://fetch.com",
     category: "Groceries",
@@ -377,6 +377,33 @@ export default function DealsPage() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Refer & Earn Section */}
+        <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/5 border border-green-500/20 rounded-2xl p-6 mb-6">
+          <h2 className="font-black text-lg mb-1 flex items-center gap-2">
+            💸 Refer Friends — Earn Real Cash
+          </h2>
+          <p className="text-gray-400 text-sm mb-4">These apps pay YOU for every friend you invite. No approval needed — just share your personal link from inside each app.</p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              { emoji: "💰", app: "Ibotta", earn: "$5 per friend", steps: "1. Download Ibotta → 2. Go to Profile → 3. Share your invite code", url: "https://ibotta.com" },
+              { emoji: "🧾", app: "Fetch Rewards", earn: "2,000 pts per friend", steps: "1. Download Fetch → 2. Go to Account → 3. Share your referral code", url: "https://fetch.com" },
+              { emoji: "🍯", app: "Honey", earn: "500 Gold per friend", steps: "1. Install Honey extension → 2. Go to Gold → 3. Share your referral link", url: "https://joinhoney.com" },
+            ].map((item) => (
+              <div key={item.app} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="text-2xl mb-2">{item.emoji}</div>
+                <div className="font-bold text-sm">{item.app}</div>
+                <div className="text-green-400 font-semibold text-xs mt-0.5 mb-2">{item.earn}</div>
+                <p className="text-gray-500 text-xs leading-relaxed mb-3">{item.steps}</p>
+                <a href={item.url} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-orange-400 hover:text-orange-300 font-semibold flex items-center gap-1">
+                  Get your link <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            ))}
+          </div>
+          <p className="text-gray-600 text-xs mt-3">💡 Post your personal invite link in your social posts and earn every time someone signs up through you.</p>
+        </div>
+
         {/* Affiliate Disclosure */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 mb-6 text-sm text-gray-400">
           💡 Some links may be affiliate links — we earn a small commission if you sign up, at no extra cost to you. This helps keep StackStreak free!
