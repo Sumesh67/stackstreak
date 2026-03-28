@@ -40,7 +40,7 @@ const DEALS: Deal[] = [
     savings: "Points on every receipt",
     howToGet: "Download Fetch → snap any receipt → earn points. Share YOUR referral code from the app — both you and your friend get bonus points.",
     expires: "Ongoing",
-    url: "https://fetch.com",
+    url: "https://fetch.com/refer?code=1TWCYK",
     category: "Groceries",
   },
   {
@@ -386,7 +386,7 @@ export default function DealsPage() {
           <div className="grid sm:grid-cols-3 gap-3">
             {[
               { emoji: "💰", app: "Ibotta", earn: "$5 per friend", steps: "1. Download Ibotta → 2. Go to Profile → 3. Share your invite code", url: "https://ibotta.com/register?invite=dfcghsy" },
-              { emoji: "🧾", app: "Fetch Rewards", earn: "2,000 pts per friend", steps: "1. Download Fetch → 2. Go to Account → 3. Share your referral code", url: "https://fetch.com" },
+              { emoji: "🧾", app: "Fetch Rewards", earn: "2,000 pts per friend", steps: "1. Download Fetch → 2. Go to Account → 3. Share your referral code", url: "https://fetch.com/refer?code=1TWCYK" },
               { emoji: "🍯", app: "Honey", earn: "500 Gold per friend", steps: "1. Install Honey extension → 2. Go to Gold → 3. Share your referral link", url: "https://joinhoney.com" },
             ].map((item) => (
               <div key={item.app} className="bg-white/5 border border-white/10 rounded-xl p-4">
