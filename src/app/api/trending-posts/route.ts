@@ -19,10 +19,10 @@ function parseRSSItems(xml: string): { title: string; description: string }[] {
     const content = match[1];
     const titleMatch =
       content.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
-      content.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/s);
+      content.match(/<title>([\s\S]*?)<\/title>/);
     const descMatch =
       content.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) ||
-      content.match(/<description>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/description>/s);
+      content.match(/<description>([\s\S]*?)<\/description>/);
     if (titleMatch?.[1]?.trim()) {
       items.push({
         title: titleMatch[1].trim().replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"),
