@@ -29,7 +29,7 @@ const DEALS: Deal[] = [
     savings: "$5 welcome + up to 10% back",
     howToGet: "Download Ibotta → sign up → scan your first grocery receipt. Share YOUR invite link from the app and earn $5 for every friend who joins.",
     expires: "Ongoing",
-    url: "https://ibotta.com",
+    url: "https://ibotta.com/register?invite=dfcghsy",
     category: "Groceries",
   },
   {
@@ -385,7 +385,7 @@ export default function DealsPage() {
           <p className="text-gray-400 text-sm mb-4">These apps pay YOU for every friend you invite. No approval needed — just share your personal link from inside each app.</p>
           <div className="grid sm:grid-cols-3 gap-3">
             {[
-              { emoji: "💰", app: "Ibotta", earn: "$5 per friend", steps: "1. Download Ibotta → 2. Go to Profile → 3. Share your invite code", url: "https://ibotta.com" },
+              { emoji: "💰", app: "Ibotta", earn: "$5 per friend", steps: "1. Download Ibotta → 2. Go to Profile → 3. Share your invite code", url: "https://ibotta.com/register?invite=dfcghsy" },
               { emoji: "🧾", app: "Fetch Rewards", earn: "2,000 pts per friend", steps: "1. Download Fetch → 2. Go to Account → 3. Share your referral code", url: "https://fetch.com" },
               { emoji: "🍯", app: "Honey", earn: "500 Gold per friend", steps: "1. Install Honey extension → 2. Go to Gold → 3. Share your referral link", url: "https://joinhoney.com" },
             ].map((item) => (
