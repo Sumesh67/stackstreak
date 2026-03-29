@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { geminiGenerate } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 
@@ -17,18 +18,12 @@ function parseRSSItems(xml: string): { title: string; description: string }[] {
   const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
   for (const match of itemMatches) {
     const content = match[1];
-    const titleMatch =
-      content.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
-      content.match(/<title>([\s\S]*?)<\/title>/);
-    const descMatch =
-      content.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) ||
-      content.match(/<description>([\s\S]*?)<\/description>/);
+    const titleMatch = content.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || content.match(/<title>([\s\S]*?)<\/title>/);
+    const descMatch = content.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/) || content.match(/<description>([\s\S]*?)<\/description>/);
     if (titleMatch?.[1]?.trim()) {
       items.push({
         title: titleMatch[1].trim().replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">"),
-        description: descMatch
-          ? descMatch[1].replace(/<[^>]*>/g, "").trim().substring(0, 200)
-          : "",
+        description: descMatch ? descMatch[1].replace(/<[^>]*>/g, "").trim().substring(0, 200) : "",
       });
     }
     if (items.length >= 10) break;
@@ -52,7 +47,6 @@ async function fetchRSS(url: string): Promise<{ title: string; description: stri
 
 export async function POST(req: NextRequest) {
   try {
-    // Fetch from multiple RSS feeds concurrently
     const feeds = [
       "https://feeds.marketwatch.com/marketwatch/personal-finance/",
       "https://rss.nytimes.com/services/xml/rss/nyt/YourMoney.xml",
@@ -62,16 +56,12 @@ export async function POST(req: NextRequest) {
 
     const results = await Promise.allSettled(feeds.map(fetchRSS));
     const allItems: { title: string; description: string }[] = [];
-
     for (const result of results) {
-      if (result.status === "fulfilled") {
-        allItems.push(...result.value);
-      }
+      if (result.status === "fulfilled") allItems.push(...result.value);
     }
-
     const headlines = allItems.slice(0, 12);
 
-    if (headlines.length === 0 || !process.env.ANTHROPIC_API_KEY) {
+    if (headlines.length === 0 || !process.env.GEMINI_API_KEY) {
       return NextResponse.json(FALLBACK_POSTS);
     }
 
@@ -80,46 +70,24 @@ export async function POST(req: NextRequest) {
 Here are today's trending finance/money headlines:
 ${headlines.map((h, i) => `${i + 1}. ${h.title}`).join("\n")}
 
-Create 7 social media post ideas inspired by these trends. Each post should:
-- Connect the trend to practical money-saving advice
-- Be relevant to average Americans worried about inflation and finances  
-- Include a specific actionable tip or shocking stat
-- Feel timely and relevant to what people are reading about TODAY
+Create 7 social media post ideas inspired by these trends. Connect each to practical money-saving advice for average Americans worried about inflation.
 
-Return a JSON array of exactly 7 objects with these keys:
+Return a JSON array of exactly 7 objects:
 - day: number 1-7
-- template: one of "tip" | "stat" | "challenge" | "alert" | "story"
+- template: "tip" | "stat" | "challenge" | "alert" | "story"
 - headline: attention-grabbing headline under 8 words
-- stat: specific number/percentage/dollar amount (e.g. "$347", "43%")
+- stat: specific number/percentage/dollar amount
 - body: 1-2 sentences of actionable advice, conversational tone
 - platform: "Both"
 - bestTime: best posting time (e.g. "7:00 PM")
-- topic: one-word category (inflation/groceries/debt/savings/bills/housing/transport)
-- trendSource: brief 3-5 word reference to which headline inspired this
+- topic: one-word category
+- trendSource: brief 3-5 word reference to the inspiring headline
 
-Return ONLY valid JSON array, no markdown, no explanation.`;
+Return ONLY valid JSON array, no markdown.`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 2048,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!response.ok) return NextResponse.json(FALLBACK_POSTS);
-
-    const data = await response.json();
-    const text = data.content?.[0]?.text || "";
+    const text = await geminiGenerate(prompt, 2048);
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) return NextResponse.json(FALLBACK_POSTS);
-
     const parsed = JSON.parse(jsonMatch[0]);
     return NextResponse.json(parsed);
   } catch {
