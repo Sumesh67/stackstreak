@@ -6,6 +6,9 @@ const BUFFER_TOKEN = process.env.BUFFER_ACCESS_TOKEN;
 const FB_PROFILE = process.env.BUFFER_FACEBOOK_PROFILE_ID;
 const IG_PROFILE = process.env.BUFFER_INSTAGRAM_PROFILE_ID;
 
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://stackstreak-two.vercel.app";
+
 const TOPIC_HASHTAGS: Record<string, string[]> = {
   inflation: ["#inflation", "#savemoney", "#personalfinance", "#moneytips", "#costoflivingincrease", "#budgeting", "#stackstreak", "#financialfreedom", "#moneyhacks", "#savingmoney"],
   groceries: ["#grocerysavings", "#savemoney", "#mealprep", "#frugalliving", "#budgetmeals", "#groceryhacks", "#stackstreak", "#personalfinance", "#moneytips", "#savingmoney"],
@@ -21,26 +24,52 @@ function buildCaption(post: { headline: string; body: string; topic: string }) {
   return `${post.headline}\n\n${post.body}\n\n💰 Save more at stackstreak-two.vercel.app\n\n${hashtags}`;
 }
 
-async function postToBuffer(profileId: string, text: string, scheduledAt?: number) {
-  const body: Record<string, unknown> = {
-    profile_ids: [profileId],
+function buildImageUrl(post: {
+  template?: string;
+  headline: string;
+  body: string;
+  stat?: string;
+  topic?: string;
+}) {
+  const params = new URLSearchParams({
+    template: post.template || "tip",
+    headline: post.headline,
+    body: post.body,
+    stat: post.stat || "",
+    topic: post.topic || "savings",
+  });
+  return `${APP_URL}/api/generate-image?${params.toString()}`;
+}
+
+async function postToBuffer(
+  profileId: string,
+  text: string,
+  scheduledAt?: number,
+  imageUrl?: string
+) {
+  const params: Record<string, string> = {
+    "profile_ids[]": profileId,
     text,
-    now: !scheduledAt,
+    now: scheduledAt ? "false" : "true",
   };
+
   if (scheduledAt) {
-    body.scheduled_at = new Date(scheduledAt * 1000).toISOString();
+    params["scheduled_at"] = new Date(scheduledAt * 1000).toISOString();
   }
 
-  const res = await fetch(`https://api.bufferapp.com/1/updates/create.json?access_token=${BUFFER_TOKEN}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      "profile_ids[]": profileId,
-      text,
-      now: scheduledAt ? "false" : "true",
-      ...(scheduledAt ? { scheduled_at: new Date(scheduledAt * 1000).toISOString() } : {}),
-    }),
-  });
+  if (imageUrl) {
+    params["media[photo]"] = imageUrl;
+    params["media[thumbnail]"] = imageUrl;
+  }
+
+  const res = await fetch(
+    `https://api.bufferapp.com/1/updates/create.json?access_token=${BUFFER_TOKEN}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(params),
+    }
+  );
 
   return res.json();
 }
@@ -54,19 +83,20 @@ export async function POST(req: NextRequest) {
     }
 
     const caption = buildCaption(post);
+    const imageUrl = buildImageUrl(post);
     const results = [];
 
     if (platforms === "Both" || platforms === "Facebook") {
-      const fbResult = await postToBuffer(FB_PROFILE!, caption);
+      const fbResult = await postToBuffer(FB_PROFILE!, caption, undefined, imageUrl);
       results.push({ platform: "Facebook", success: !fbResult.error, data: fbResult });
     }
 
     if (platforms === "Both" || platforms === "Instagram") {
-      const igResult = await postToBuffer(IG_PROFILE!, caption);
+      const igResult = await postToBuffer(IG_PROFILE!, caption, undefined, imageUrl);
       results.push({ platform: "Instagram", success: !igResult.error, data: igResult });
     }
 
-    return NextResponse.json({ success: true, results, caption });
+    return NextResponse.json({ success: true, results, caption, imageUrl });
   } catch (error) {
     console.error("Buffer post error:", error);
     return NextResponse.json({ error: "Failed to post" }, { status: 500 });
@@ -79,23 +109,32 @@ export async function GET() {
     if (!BUFFER_TOKEN) return NextResponse.json({ error: "Buffer not configured" });
 
     // Generate a post using Gemini
-    const geminiRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "https://stackstreak-two.vercel.app"}/api/generate-posts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ days: 1 }),
-    });
+    const geminiRes = await fetch(
+      `${APP_URL}/api/generate-posts`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: 1 }),
+      }
+    );
 
     const posts = await geminiRes.json();
     const post = posts[0];
     const caption = buildCaption(post);
+    const imageUrl = buildImageUrl(post);
 
-    // Post to both platforms
-    const fbResult = await postToBuffer(FB_PROFILE!, caption);
-    const igResult = await postToBuffer(IG_PROFILE!, caption);
+    // Post to both platforms with image
+    const fbResult = await postToBuffer(FB_PROFILE!, caption, undefined, imageUrl);
+    const igResult = await postToBuffer(IG_PROFILE!, caption, undefined, imageUrl);
 
     return NextResponse.json({
       success: true,
-      posted: { caption, facebook: !fbResult.error, instagram: !igResult.error },
+      posted: {
+        caption,
+        imageUrl,
+        facebook: !fbResult.error,
+        instagram: !igResult.error,
+      },
     });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
