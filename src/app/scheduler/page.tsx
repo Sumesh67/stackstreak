@@ -181,6 +181,32 @@ function PostCard({
   const toggleInsta = () => onStatusChange(post.day, { instagramPosted: !status.instagramPosted });
   const toggleFacebook = () => onStatusChange(post.day, { facebookPosted: !status.facebookPosted });
 
+  const handlePostToInstagram = () => {
+    const caption = buildCaption(post);
+    // Copy caption to clipboard
+    navigator.clipboard.writeText(caption).catch(() => {
+      const el = document.createElement("textarea");
+      el.value = caption;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    });
+    // Build image URL and open in new tab so user can save it
+    const templateMap: Record<string, string> = { tip: "tip", stat: "stat", challenge: "challenge", alert: "inflation", story: "story" };
+    const imgParams = new URLSearchParams({
+      template: templateMap[post.template] ?? "tip",
+      headline: post.headline,
+      body: post.body,
+      stat: post.stat ?? "",
+      topic: post.topic ?? "savings",
+    });
+    window.open(`/api/generate-image?${imgParams.toString()}`, "_blank");
+    setPostResult("📋 Caption copied! Image opened in new tab — save it, then post to Instagram");
+    onStatusChange(post.day, { instagramPosted: true });
+    setTimeout(() => setPostResult(null), 5000);
+  };
+
   const handlePostToBuffer = async () => {
     setPosting(true);
     setPostResult(null);
@@ -278,15 +304,28 @@ function PostCard({
 
         <button
           onClick={handlePostToBuffer}
-          disabled={posting || status.done}
+          disabled={posting || status.facebookPosted}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-            status.done
+            status.facebookPosted
               ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
               : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 disabled:opacity-50"
           }`}
         >
           {posting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-          {posting ? "Posting..." : status.done ? "Posted ✓" : "Post to Buffer"}
+          {posting ? "Posting..." : status.facebookPosted ? "FB Posted ✓" : "📘 Facebook"}
+        </button>
+
+        <button
+          onClick={handlePostToInstagram}
+          disabled={status.instagramPosted}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            status.instagramPosted
+              ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
+              : "bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/30"
+          }`}
+        >
+          <Camera className="w-3.5 h-3.5" />
+          {status.instagramPosted ? "IG Done ✓" : "📸 Instagram"}
         </button>
 
         <button
