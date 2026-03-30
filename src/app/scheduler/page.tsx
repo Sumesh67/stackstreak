@@ -135,6 +135,8 @@ function PostCard({
   onStatusChange: (day: number, update: Partial<PostStatus>) => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [postResult, setPostResult] = useState<string | null>(null);
   const router = useRouter();
 
   const topicClass = TOPIC_COLORS[post.topic] ?? TOPIC_COLORS.default;
@@ -178,6 +180,31 @@ function PostCard({
   const toggleDone = () => onStatusChange(post.day, { done: !status.done });
   const toggleInsta = () => onStatusChange(post.day, { instagramPosted: !status.instagramPosted });
   const toggleFacebook = () => onStatusChange(post.day, { facebookPosted: !status.facebookPosted });
+
+  const handlePostToBuffer = async () => {
+    setPosting(true);
+    setPostResult(null);
+    try {
+      const res = await fetch("/api/buffer/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post, platforms: post.platform, scheduleNow: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPostResult("✅ Posted to Buffer!");
+        onStatusChange(post.day, { done: true, instagramPosted: post.platform !== "Facebook", facebookPosted: post.platform !== "Instagram" });
+        setTimeout(() => setPostResult(null), 3000);
+      } else {
+        setPostResult("❌ Failed — check Buffer connection");
+        setTimeout(() => setPostResult(null), 3000);
+      }
+    } catch {
+      setPostResult("❌ Error posting");
+      setTimeout(() => setPostResult(null), 3000);
+    }
+    setPosting(false);
+  };
 
   return (
     <div
@@ -250,17 +277,32 @@ function PostCard({
         </button>
 
         <button
-          onClick={toggleDone}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ml-auto ${
+          onClick={handlePostToBuffer}
+          disabled={posting || status.done}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
             status.done
-              ? "bg-green-500/20 text-green-300 border border-green-500/30"
-              : "bg-white/5 hover:bg-white/10 text-gray-500 hover:text-white border border-white/10"
+              ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
+              : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 disabled:opacity-50"
           }`}
         >
+          {posting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+          {posting ? "Posting..." : status.done ? "Posted ✓" : "Post to Buffer"}
+        </button>
+
+        <button
+          onClick={toggleDone}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-gray-500 hover:text-white border border-white/10 transition-colors ml-auto"
+        >
           <CheckCircle className="w-3.5 h-3.5" />
-          {status.done ? "Posted ✓" : "Mark Posted"}
+          Mark Done
         </button>
       </div>
+
+      {postResult && (
+        <div className={`text-xs font-semibold text-center py-1 rounded-lg ${postResult.startsWith("✅") ? "text-green-400 bg-green-500/10" : "text-red-400 bg-red-500/10"}`}>
+          {postResult}
+        </div>
+      )}
 
       {/* Platform status bar */}
       <div className="flex gap-2 pt-2 border-t border-white/5">
