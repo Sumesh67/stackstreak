@@ -3,11 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 const BUFFER_TOKEN = process.env.BUFFER_ACCESS_TOKEN;
-const FB_PROFILE = process.env.BUFFER_FACEBOOK_PROFILE_ID;
-const IG_PROFILE = process.env.BUFFER_INSTAGRAM_PROFILE_ID;
-
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://stackstreak-two.vercel.app";
+const FB_CHANNEL_ID = process.env.BUFFER_FACEBOOK_PROFILE_ID;
+const IG_CHANNEL_ID = process.env.BUFFER_INSTAGRAM_PROFILE_ID;
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://stackstreak-two.vercel.app";
 
 const TOPIC_HASHTAGS: Record<string, string[]> = {
   inflation: ["#inflation", "#savemoney", "#personalfinance", "#moneytips", "#costoflivingincrease", "#budgeting", "#stackstreak", "#financialfreedom", "#moneyhacks", "#savingmoney"],
@@ -24,13 +22,7 @@ function buildCaption(post: { headline: string; body: string; topic: string }) {
   return `${post.headline}\n\n${post.body}\n\n💰 Save more at stackstreak-two.vercel.app\n\n${hashtags}`;
 }
 
-function buildImageUrl(post: {
-  template?: string;
-  headline: string;
-  body: string;
-  stat?: string;
-  topic?: string;
-}) {
+function buildImageUrl(post: { template?: string; headline: string; body: string; stat?: string; topic?: string }) {
   const params = new URLSearchParams({
     template: post.template || "tip",
     headline: post.headline,
@@ -41,42 +33,42 @@ function buildImageUrl(post: {
   return `${APP_URL}/api/generate-image?${params.toString()}`;
 }
 
-async function postToBuffer(
-  profileId: string,
-  text: string,
-  scheduledAt?: number,
-  imageUrl?: string
-) {
-  const params: Record<string, string> = {
-    "profile_ids[]": profileId,
-    text,
-    now: scheduledAt ? "false" : "true",
+async function postToBufferGraphQL(channelId: string, text: string, schedulingType: "automatic" | "notification" = "automatic") {
+  const mutation = {
+    query: `mutation CreatePost($input: CreatePostInput!) { 
+      createPost(input: $input) { 
+        ... on PostActionSuccess { post { id status } } 
+      } 
+    }`,
+    variables: {
+      input: {
+        channelId,
+        schedulingType,
+        mode: "addToQueue",
+        text,
+      }
+    }
   };
 
-  if (scheduledAt) {
-    params["scheduled_at"] = new Date(scheduledAt * 1000).toISOString();
+  const res = await fetch("https://api.buffer.com", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${BUFFER_TOKEN}`,
+    },
+    body: JSON.stringify(mutation),
+  });
+
+  const data = await res.json();
+  if (data.errors) {
+    return { error: data.errors[0]?.message || "Unknown error" };
   }
-
-  if (imageUrl) {
-    params["media[photo]"] = imageUrl;
-    params["media[thumbnail]"] = imageUrl;
-  }
-
-  const res = await fetch(
-    `https://api.bufferapp.com/1/updates/create.json?access_token=${BUFFER_TOKEN}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(params),
-    }
-  );
-
-  return res.json();
+  return { success: true, data: data.data?.createPost };
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { post, platforms, scheduleNow } = await req.json();
+    const { post, platforms } = await req.json();
 
     if (!BUFFER_TOKEN) {
       return NextResponse.json({ error: "Buffer not configured" }, { status: 503 });
@@ -86,21 +78,20 @@ export async function POST(req: NextRequest) {
     const imageUrl = buildImageUrl(post);
     const results = [];
 
-    // Facebook: posts fully automatically with image
+    // Facebook: posts automatically to queue
     if (platforms === "Both" || platforms === "Facebook") {
-      const fbResult = await postToBuffer(FB_PROFILE!, caption, undefined, imageUrl);
-      results.push({ platform: "Facebook", success: !fbResult.error, data: fbResult });
+      const fbResult = await postToBufferGraphQL(FB_CHANNEL_ID!, caption, "automatic");
+      results.push({ platform: "Facebook", success: fbResult.success, data: fbResult });
     }
 
-    // Instagram: Buffer sends a push notification reminder (tap to post on phone)
-    // Instagram requires manual final tap due to API limitations — Buffer handles this via reminder
+    // Instagram: uses notification scheduling (Buffer sends push to phone for one-tap posting)
     if (platforms === "Both" || platforms === "Instagram") {
-      const igCaption = caption + "\n\n📸 Image: " + imageUrl;
-      const igResult = await postToBuffer(IG_PROFILE!, igCaption, undefined, undefined);
+      const igCaption = `${caption}\n\n📸 Download image: ${imageUrl}`;
+      const igResult = await postToBufferGraphQL(IG_CHANNEL_ID!, igCaption, "notification");
       results.push({
         platform: "Instagram",
-        success: !igResult.error,
-        note: "Buffer will send a reminder notification to your phone — tap to post",
+        success: igResult.success,
+        note: "Check Buffer app on your phone — tap the notification to post with image",
         data: igResult
       });
     }
@@ -112,38 +103,29 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET — auto-post daily content (called by cron)
+// GET — daily auto-post (can be called by a cron job)
 export async function GET() {
   try {
     if (!BUFFER_TOKEN) return NextResponse.json({ error: "Buffer not configured" });
 
-    // Generate a post using Gemini
-    const geminiRes = await fetch(
-      `${APP_URL}/api/generate-posts`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ days: 1 }),
-      }
-    );
+    const geminiRes = await fetch(`${APP_URL}/api/generate-posts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ days: 1 }),
+    });
 
     const posts = await geminiRes.json();
     const post = posts[0];
     const caption = buildCaption(post);
     const imageUrl = buildImageUrl(post);
 
-    // Post to both platforms with image
-    const fbResult = await postToBuffer(FB_PROFILE!, caption, undefined, imageUrl);
-    const igResult = await postToBuffer(IG_PROFILE!, caption, undefined, imageUrl);
+    const fbResult = await postToBufferGraphQL(FB_CHANNEL_ID!, caption, "automatic");
+    const igCaption = `${caption}\n\n📸 Image: ${imageUrl}`;
+    const igResult = await postToBufferGraphQL(IG_CHANNEL_ID!, igCaption, "notification");
 
     return NextResponse.json({
       success: true,
-      posted: {
-        caption,
-        imageUrl,
-        facebook: !fbResult.error,
-        instagram: !igResult.error,
-      },
+      posted: { caption, imageUrl, facebook: fbResult.success, instagram: igResult.success },
     });
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
