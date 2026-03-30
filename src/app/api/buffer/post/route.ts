@@ -86,14 +86,23 @@ export async function POST(req: NextRequest) {
     const imageUrl = buildImageUrl(post);
     const results = [];
 
+    // Facebook: posts fully automatically with image
     if (platforms === "Both" || platforms === "Facebook") {
       const fbResult = await postToBuffer(FB_PROFILE!, caption, undefined, imageUrl);
       results.push({ platform: "Facebook", success: !fbResult.error, data: fbResult });
     }
 
+    // Instagram: Buffer sends a push notification reminder (tap to post on phone)
+    // Instagram requires manual final tap due to API limitations — Buffer handles this via reminder
     if (platforms === "Both" || platforms === "Instagram") {
-      const igResult = await postToBuffer(IG_PROFILE!, caption, undefined, imageUrl);
-      results.push({ platform: "Instagram", success: !igResult.error, data: igResult });
+      const igCaption = caption + "\n\n📸 Image: " + imageUrl;
+      const igResult = await postToBuffer(IG_PROFILE!, igCaption, undefined, undefined);
+      results.push({
+        platform: "Instagram",
+        success: !igResult.error,
+        note: "Buffer will send a reminder notification to your phone — tap to post",
+        data: igResult
+      });
     }
 
     return NextResponse.json({ success: true, results, caption, imageUrl });
