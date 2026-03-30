@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Flame, Trophy, Plus, CheckCircle, Zap, TrendingUp, LogOut, BookOpen, Target, Play, Video, Tag, Image as ImageIcon } from "lucide-react";
+import { Flame, Trophy, Plus, CheckCircle, Zap, TrendingUp, LogOut, BookOpen, Target, Play, Video, Tag, Image as ImageIcon, Calendar } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -183,6 +183,9 @@ export default function DashboardPage() {
           </Link>
           <Link href="/image-gen" className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors">
             <ImageIcon className="w-4 h-4" /> Image Gen
+          </Link>
+          <Link href="/scheduler" className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors">
+            <Calendar className="w-4 h-4" /> Schedule
           </Link>
           <Link href="/pro" className="flex items-center gap-1 text-orange-400 border border-orange-500/30 hover:bg-orange-500/10 px-3 py-1 rounded-full text-xs font-semibold transition-colors">
             Go Pro 🔥

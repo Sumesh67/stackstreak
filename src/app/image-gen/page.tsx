@@ -720,6 +720,34 @@ export default function ImageGenPage() {
   const [trendingPosts, setTrendingPosts] = useState<PostData[] | null>(null);
   const [generatingTrending, setGeneratingTrending] = useState(false);
 
+  // Read URL params to pre-load content
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const headline = params.get('headline');
+    const body = params.get('body');
+    const template = params.get('template') as TemplateId | null;
+    const stat = params.get('stat');
+
+    if (headline || body) {
+      if (template && ['tip','stat','challenge','inflation','story'].includes(template)) {
+        setSelectedTemplate(template);
+        const tmpl = TEMPLATES.find((t) => t.id === template);
+        if (tmpl) {
+          setSizeMode(tmpl.defaultSize);
+          if (template === 'story') setFontSize(56);
+          else setFontSize(52);
+        }
+      }
+      setFields(prev => ({
+        ...prev,
+        headline: headline || prev.headline,
+        body: body || prev.body,
+        stat: stat || prev.stat || '',
+      }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // When template changes, load defaults and reset size
   const handleTemplateChange = (t: Template) => {
     setSelectedTemplate(t.id);
