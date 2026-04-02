@@ -173,7 +173,7 @@ export async function GET(req: NextRequest) {
                 fontWeight: 700,
               }}
             >
-              stackstreak-two.vercel.app
+              stackstreak.aivantageworks.com
             </span>
           </div>
           <span

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 const BUFFER_TOKEN = process.env.BUFFER_ACCESS_TOKEN;
 const FB_CHANNEL_ID = process.env.BUFFER_FACEBOOK_PROFILE_ID;
 const IG_CHANNEL_ID = process.env.BUFFER_INSTAGRAM_PROFILE_ID;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://stackstreak-two.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://stackstreak.aivantageworks.com";
 
 const TOPIC_HASHTAGS: Record<string, string[]> = {
   inflation: ["#inflation", "#savemoney", "#personalfinance", "#moneytips", "#costoflivingincrease", "#budgeting", "#stackstreak", "#financialfreedom", "#moneyhacks", "#savingmoney"],
@@ -19,7 +19,7 @@ const TOPIC_HASHTAGS: Record<string, string[]> = {
 
 function buildCaption(post: { headline: string; body: string; topic: string }) {
   const hashtags = (TOPIC_HASHTAGS[post.topic] || TOPIC_HASHTAGS.default).join(" ");
-  return `${post.headline}\n\n${post.body}\n\n💰 Save more at stackstreak-two.vercel.app\n\n${hashtags}`;
+  return `${post.headline}\n\n${post.body}\n\n💰 Save more at stackstreak.aivantageworks.com\n\n${hashtags}`;
 }
 
 function buildImageUrl(post: { template?: string; headline: string; body: string; stat?: string; topic?: string }) {
