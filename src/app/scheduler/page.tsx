@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
+import week1Pack from "@/lib/week1-scheduler-pack.json";
 import {
   Flame,
   ArrowLeft,
@@ -48,6 +49,8 @@ type SchedulerData = {
   statuses: Record<number, PostStatus>;
   generatedAt: string;
 };
+
+const PREBUILT_WEEK_1 = week1Pack as PostData[];
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -539,6 +542,17 @@ export default function SchedulerPage() {
     }
   };
 
+  const loadPrebuiltWeek = () => {
+    const newPosts = PREBUILT_WEEK_1;
+    const newStatuses: Record<number, PostStatus> = {};
+    newPosts.forEach((p) => { newStatuses[p.day] = defaultStatus(); });
+    const now = new Date().toISOString();
+    setPosts(newPosts);
+    setStatuses(newStatuses);
+    setGeneratedAt(now);
+    persist(newPosts, newStatuses, now);
+  };
+
   const postsGenerated = posts.length;
   const postsDone = Object.values(statuses).filter((s) => s.done).length;
 
@@ -565,10 +579,18 @@ export default function SchedulerPage() {
             <Calendar className="text-orange-400 w-8 h-8" />
             Content Scheduler
           </h1>
-          <p className="text-gray-400 mt-1">Generate a week of posts, copy &amp; post in minutes</p>
+          <p className="text-gray-400 mt-1">Load a ready-made week or generate fresh posts, then copy &amp; post in minutes</p>
 
           {/* Action buttons */}
           <div className="flex flex-wrap gap-3 mt-5">
+            <button
+              onClick={loadPrebuiltWeek}
+              disabled={generating || generatingTrending}
+              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 to-green-400 hover:from-emerald-400 hover:to-green-300 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all"
+            >
+              <CheckCircle className="w-4 h-4" /> Load Week 1 Pack
+            </button>
+
             <button
               onClick={() => generatePosts("/api/generate-posts", generating)}
               disabled={generating || generatingTrending}
@@ -678,14 +700,22 @@ export default function SchedulerPage() {
             <div className="text-6xl mb-4">📅</div>
             <p className="font-semibold text-lg text-gray-400">No posts yet</p>
             <p className="text-sm mt-1 mb-6">
-              Generate a full week of content with one click
+              Load a proven week 1 pack or generate a fresh week of content
             </p>
-            <button
-              onClick={() => generatePosts("/api/generate-posts", generating)}
-              className="bg-orange-500 hover:bg-orange-400 px-6 py-3 rounded-full font-bold transition-colors"
-            >
-              ⚡ Generate This Week
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={loadPrebuiltWeek}
+                className="bg-emerald-500 hover:bg-emerald-400 px-6 py-3 rounded-full font-bold transition-colors"
+              >
+                ✅ Load Week 1 Pack
+              </button>
+              <button
+                onClick={() => generatePosts("/api/generate-posts", generating)}
+                className="bg-orange-500 hover:bg-orange-400 px-6 py-3 rounded-full font-bold transition-colors"
+              >
+                ⚡ Generate This Week
+              </button>
+            </div>
           </div>
         )}
       </div>

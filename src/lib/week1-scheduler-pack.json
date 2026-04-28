@@ -1,0 +1,72 @@
+[
+  {
+    "day": 1,
+    "template": "alert",
+    "headline": "Inflation is winning. Fight back with streaks.",
+    "stat": "",
+    "body": "Groceries, bills, and everyday life got expensive fast. StackStreak helps you build savings momentum one small win at a time.",
+    "platform": "Both",
+    "bestTime": "8:15 AM",
+    "topic": "inflation"
+  },
+  {
+    "day": 2,
+    "template": "tip",
+    "headline": "Small savings still count.",
+    "stat": "",
+    "body": "Saving $5 matters. Skipping one impulse buy matters. Momentum beats perfection when you’re trying to get ahead.",
+    "platform": "Facebook",
+    "bestTime": "12:15 PM",
+    "topic": "savings"
+  },
+  {
+    "day": 3,
+    "template": "challenge",
+    "headline": "$1,378 in one year",
+    "stat": "$1,378",
+    "body": "The 52-week challenge starts with just $1 and builds into real savings by the end of the year.",
+    "platform": "Both",
+    "bestTime": "7:30 PM",
+    "topic": "savings"
+  },
+  {
+    "day": 4,
+    "template": "story",
+    "headline": "Don’t let the weekend wreck your budget.",
+    "stat": "",
+    "body": "Coffee, lunch out, a Target run, one random order — weekends can drain money fast when nothing is planned.",
+    "platform": "Instagram",
+    "bestTime": "8:00 AM",
+    "topic": "shopping"
+  },
+  {
+    "day": 5,
+    "template": "challenge",
+    "headline": "Try a no-spend reset.",
+    "stat": "7 days",
+    "body": "Even a short no-spend stretch can reset your habits and show you where money leaks out every week.",
+    "platform": "Facebook",
+    "bestTime": "10:00 AM",
+    "topic": "mindset"
+  },
+  {
+    "day": 6,
+    "template": "tip",
+    "headline": "Reset your money this week.",
+    "stat": "",
+    "body": "Sunday is the perfect time to pick one savings streak and start fresh without guilt or overwhelm.",
+    "platform": "Both",
+    "bestTime": "7:00 PM",
+    "topic": "mindset"
+  },
+  {
+    "day": 7,
+    "template": "tip",
+    "headline": "Start this week with one small win.",
+    "stat": "",
+    "body": "You don’t need a perfect financial plan. One check-in and one better choice can change your momentum.",
+    "platform": "Both",
+    "bestTime": "8:00 AM",
+    "topic": "savings"
+  }
+]

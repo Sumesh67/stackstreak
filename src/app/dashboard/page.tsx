@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const [loadingTip, setLoadingTip] = useState(false);
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
   const [startingChallenge, setStartingChallenge] = useState<string | null>(null);
+  const [celebration, setCelebration] = useState<{ challengeName: string; amount: number; streak: number } | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -151,6 +152,8 @@ export default function DashboardPage() {
       last_checkin_at: new Date().toISOString(),
     } : c));
 
+    setCelebration({ challengeName: challenge.name, amount, streak: newStreak });
+    setTimeout(() => setCelebration(null), 4500);
     setCheckingIn(null);
   };
 
@@ -207,6 +210,20 @@ export default function DashboardPage() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {celebration && (
+          <div className="mb-6 bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30 rounded-2xl p-5 flex items-start gap-3">
+            <div className="text-3xl">🎉</div>
+            <div>
+              <div className="text-xs text-green-400 font-semibold mb-1">CHECK-IN COMPLETE</div>
+              <p className="text-white font-semibold">You checked in to {celebration.challengeName}.</p>
+              <p className="text-gray-300 text-sm mt-1">
+                {celebration.amount > 0
+                  ? `That adds $${celebration.amount.toFixed(2)} to your total and keeps your ${celebration.streak}-day streak alive.`
+                  : `Your ${celebration.streak}-day streak is alive. Small wins count.`}
+              </p>
+            </div>
+          </div>
+        )}
         {/* AI Tip / First Step */}
         <div className="bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/20 rounded-2xl p-5 mb-8 flex items-start gap-3">
           <Zap className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
@@ -265,6 +282,9 @@ export default function DashboardPage() {
                         {challenge.current_streak}
                       </div>
                       <div className="text-xs text-gray-500">day streak</div>
+                      {challenge.current_streak > 0 && challenge.current_streak < 7 && (
+                        <div className="text-[10px] text-orange-300 mt-1">First week in progress</div>
+                      )}
                     </div>
                   </div>
 
@@ -303,7 +323,7 @@ export default function DashboardPage() {
                     className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2
                       ${checkedToday
                         ? "bg-green-500/20 text-green-400 cursor-default border border-green-500/20"
-                        : "bg-orange-500 hover:bg-orange-400 text-white"
+                        : "bg-orange-500 hover:bg-orange-400 text-white shadow-lg shadow-orange-500/20"
                       }`}
                   >
                     {checkedToday ? (
