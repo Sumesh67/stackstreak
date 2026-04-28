@@ -31,7 +31,7 @@ export default function AuthPage() {
         options: { data: { full_name: name } },
       });
       if (error) setError(error.message);
-      else setSuccess("Check your email to confirm your account!");
+      else setSuccess("Check your email to confirm your account, then sign in to start your first challenge.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);

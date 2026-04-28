@@ -106,7 +106,7 @@ function getStorageKey(): string {
 function buildCaption(post: PostData): string {
   const tags = TOPIC_HASHTAGS[post.topic] ?? TOPIC_HASHTAGS.default;
   const hashtagLine = tags.join(" ");
-  return `${post.headline}\n\n${post.body}\n\n💰 Save more at stackstreak-two.vercel.app\n\n${hashtagLine}`;
+  return `${post.headline}\n\n${post.body}\n\n💰 Save more at stackstreak.aivantageworks.com\n\n${hashtagLine}`;
 }
 
 function formatDate(iso: string): string {

@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
       }],
       customer_email: email || undefined,
       metadata: { userId: userId || '' },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://stackstreak-two.vercel.app'}/dashboard?upgraded=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://stackstreak-two.vercel.app'}/pro`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://stackstreak.aivantageworks.com'}/dashboard?upgraded=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://stackstreak.aivantageworks.com'}/pro`,
     });
 
     return NextResponse.json({ url: session.url });

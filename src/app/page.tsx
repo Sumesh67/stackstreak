@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Flame, Trophy, Zap, Shield, Star, ArrowRight, CheckCircle, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { Flame, Trophy, Zap, Shield, Star, ArrowRight, TrendingUp } from "lucide-react";
 
 const CHALLENGES = [
   {
@@ -36,23 +36,13 @@ const CHALLENGES = [
   },
 ];
 
-const TESTIMONIALS = [
-  { name: "Sarah M.", text: "I've tried budgeting apps before. This is the first one I actually use every day. The streak is addictive!", avatar: "👩‍💼" },
-  { name: "James T.", text: "6 weeks in on the 52-week challenge. I've already saved more than I did all of last year.", avatar: "👨‍💻" },
-  { name: "Maria L.", text: "The AI tips are surprisingly good. It knows exactly when I'm about to give up and sends the right message.", avatar: "👩‍🍳" },
+const EARLY_WINS = [
+  { title: "52-week challenge", text: "A simple way to turn small weekly savings into $1,378 by the end of the year.", avatar: "🌱" },
+  { title: "No-spend reset", text: "Perfect for anyone trying to stop leak spending and build momentum fast.", avatar: "🧊" },
+  { title: "AI money nudges", text: "Quick prompts and ideas when you need motivation, not a lecture.", avatar: "🤖" },
 ];
 
 export default function LandingPage() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubmitted(true);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Nav */}
@@ -64,9 +54,9 @@ export default function LandingPage() {
         <div className="flex items-center gap-4">
           <a href="#challenges" className="text-gray-400 hover:text-white text-sm transition-colors">Challenges</a>
           <a href="#how" className="text-gray-400 hover:text-white text-sm transition-colors">How it works</a>
-          <button className="bg-orange-500 hover:bg-orange-400 px-4 py-2 rounded-full text-sm font-semibold transition-colors">
+          <Link href="/auth" className="bg-orange-500 hover:bg-orange-400 px-4 py-2 rounded-full text-sm font-semibold transition-colors inline-block">
             Start Free →
-          </button>
+          </Link>
         </div>
       </nav>
 
@@ -89,31 +79,23 @@ export default function LandingPage() {
           No bank account needed. No shame. Just wins.
         </p>
 
-        {!submitted ? (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-orange-500 hover:bg-orange-400 px-6 py-3 rounded-full font-semibold transition-colors flex items-center gap-2 justify-center"
-            >
-              Start Free <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-        ) : (
-          <div className="flex items-center justify-center gap-2 text-green-400 text-lg">
-            <CheckCircle className="w-6 h-6" />
-            <span>You&apos;re on the list! We&apos;ll let you know when we launch.</span>
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto justify-center">
+          <Link
+            href="/auth"
+            className="bg-orange-500 hover:bg-orange-400 px-6 py-3 rounded-full font-semibold transition-colors flex items-center gap-2 justify-center"
+          >
+            Start Free <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="#challenges"
+            className="bg-white/5 hover:bg-white/10 border border-white/10 px-6 py-3 rounded-full font-semibold transition-colors flex items-center gap-2 justify-center"
+          >
+            See Challenges
+          </Link>
+        </div>
 
         <p className="text-gray-600 text-sm mt-4">Free forever. No credit card. No bank linking.</p>
+        <p className="text-gray-500 text-sm mt-2">Create your account and start your first challenge in under 2 minutes.</p>
 
         {/* Social proof numbers */}
         <div className="flex items-center justify-center gap-8 mt-12 text-center">
@@ -123,8 +105,8 @@ export default function LandingPage() {
           </div>
           <div className="w-px h-10 bg-white/10" />
           <div>
-            <div className="text-3xl font-black text-orange-400">🔥 30+</div>
-            <div className="text-gray-500 text-sm">day streaks happening now</div>
+            <div className="text-3xl font-black text-orange-400">🔥 Daily</div>
+            <div className="text-gray-500 text-sm">money-saving motivation</div>
           </div>
           <div className="w-px h-10 bg-white/10" />
           <div>
@@ -205,16 +187,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Early Wins */}
       <section className="py-20 px-6 max-w-6xl mx-auto">
-        <h2 className="text-3xl font-black text-center mb-12">People actually using it</h2>
+        <h2 className="text-3xl font-black text-center mb-4">Built for real savings momentum</h2>
+        <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
+          StackStreak is early, but the goal is simple: make saving money feel lighter, clearer, and way more doable.
+        </p>
         <div className="grid md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t) => (
-            <div key={t.name} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">&ldquo;{t.text}&rdquo;</p>
+          {EARLY_WINS.map((t) => (
+            <div key={t.title} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+              <p className="text-gray-300 text-sm leading-relaxed mb-4">{t.text}</p>
               <div className="flex items-center gap-2">
                 <span className="text-2xl">{t.avatar}</span>
-                <span className="font-semibold text-sm">{t.name}</span>
+                <span className="font-semibold text-sm">{t.title}</span>
               </div>
             </div>
           ))}
@@ -227,9 +212,9 @@ export default function LandingPage() {
           <Flame className="w-12 h-12 text-orange-400 mx-auto mb-4 streak-pulse" />
           <h2 className="text-4xl font-black mb-4">Ready to start your streak?</h2>
           <p className="text-gray-400 mb-8">Join people turning saving money into a daily win. Free forever.</p>
-          <button className="bg-orange-500 hover:bg-orange-400 px-8 py-4 rounded-full text-lg font-bold transition-colors inline-flex items-center gap-2">
+          <Link href="/auth" className="bg-orange-500 hover:bg-orange-400 px-8 py-4 rounded-full text-lg font-bold transition-colors inline-flex items-center gap-2">
             Start Your First Challenge <ArrowRight className="w-5 h-5" />
-          </button>
+          </Link>
           <p className="text-gray-600 text-sm mt-4">No credit card. No bank account. Just streaks.</p>
         </div>
       </section>

@@ -42,6 +42,7 @@ export default function DashboardPage() {
   const [aiTip, setAiTip] = useState("");
   const [loadingTip, setLoadingTip] = useState(false);
   const [checkingIn, setCheckingIn] = useState<string | null>(null);
+  const [startingChallenge, setStartingChallenge] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -64,7 +65,10 @@ export default function DashboardPage() {
       .eq("user_id", userId)
       .eq("status", "active")
       .order("created_at", { ascending: false });
-    if (data) setChallenges(data);
+    if (data) {
+      setChallenges(data);
+      if (data.length === 0) setShowNewChallenge(true);
+    }
   };
 
   const fetchDailyTip = async (userId: string) => {
@@ -81,8 +85,12 @@ export default function DashboardPage() {
 
   const startChallenge = async (preset: typeof PRESET_CHALLENGES[0]) => {
     if (!user) return;
+    setStartingChallenge(preset.id);
     const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    if (!authUser) {
+      setStartingChallenge(null);
+      return;
+    }
 
     const durationMap: Record<string, number> = { "52week": 364, nospend: 30, "1k90": 90 };
 
@@ -98,6 +106,7 @@ export default function DashboardPage() {
       setChallenges(prev => [data, ...prev]);
       setShowNewChallenge(false);
     }
+    setStartingChallenge(null);
   };
 
   const checkIn = async (challenge: Challenge) => {
@@ -198,13 +207,17 @@ export default function DashboardPage() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* AI Tip */}
+        {/* AI Tip / First Step */}
         <div className="bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/20 rounded-2xl p-5 mb-8 flex items-start gap-3">
           <Zap className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
           <div>
-            <div className="text-xs text-orange-400 font-semibold mb-1">TODAY&apos;S TIP</div>
+            <div className="text-xs text-orange-400 font-semibold mb-1">{challenges.length === 0 ? "FIRST STEP" : "TODAY&apos;S TIP"}</div>
             <p className="text-gray-200 text-sm leading-relaxed">
-              {loadingTip ? "Loading your daily tip..." : aiTip || "Every dollar saved today is a dollar working for your future. 💪"}
+              {challenges.length === 0
+                ? "Start with one simple challenge today. You can always add more later — the goal is momentum, not perfection."
+                : loadingTip
+                  ? "Loading your daily tip..."
+                  : aiTip || "Every dollar saved today is a dollar working for your future. 💪"}
             </p>
           </div>
         </div>
@@ -227,10 +240,10 @@ export default function DashboardPage() {
         {challenges.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
             <div className="text-5xl mb-4">🎯</div>
-            <p className="font-semibold text-lg text-gray-400">No challenges yet</p>
-            <p className="text-sm mt-1">Pick a challenge to start building your streak</p>
+            <p className="font-semibold text-lg text-gray-300">Let&apos;s start your first challenge</p>
+            <p className="text-sm mt-1 max-w-md mx-auto">Pick one simple goal below and get your first win today. The fastest start is the 52-Week Classic.</p>
             <button onClick={() => setShowNewChallenge(true)} className="mt-4 bg-orange-500 hover:bg-orange-400 px-6 py-3 rounded-full font-semibold transition-colors">
-              Start a Challenge
+              Pick My First Challenge
             </button>
           </div>
         ) : (
@@ -377,19 +390,21 @@ export default function DashboardPage() {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <div className="bg-[#111118] border border-white/10 rounded-3xl p-8 max-w-lg w-full">
             <h2 className="text-2xl font-black mb-2">Pick a challenge</h2>
-            <p className="text-gray-400 text-sm mb-6">Choose one to start building your streak today.</p>
+            <p className="text-gray-400 text-sm mb-6">Choose one to start building your streak today. If you want the easiest win, start with the 52-Week Classic.</p>
 
             <div className="space-y-3">
               {PRESET_CHALLENGES.map((preset) => (
                 <button
                   key={preset.id}
                   onClick={() => startChallenge(preset)}
-                  className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-orange-500/30 rounded-2xl p-4 text-left transition-colors flex items-center gap-4"
+                  disabled={startingChallenge !== null}
+                  className="w-full bg-white/5 hover:bg-white/10 disabled:opacity-60 border border-white/10 hover:border-orange-500/30 rounded-2xl p-4 text-left transition-colors flex items-center gap-4"
                 >
                   <span className="text-3xl">{preset.icon}</span>
                   <div>
-                    <div className="font-bold">{preset.name}</div>
+                    <div className="font-bold flex items-center gap-2">{preset.name} {preset.id === "52week" && <span className="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full">BEST FIRST PICK</span>}</div>
                     <div className="text-gray-400 text-sm">{preset.description}</div>
+                    {startingChallenge === preset.id && <div className="text-orange-400 text-xs mt-2">Starting your challenge...</div>}
                   </div>
                 </button>
               ))}
