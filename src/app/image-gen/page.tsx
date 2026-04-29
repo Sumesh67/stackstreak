@@ -400,29 +400,17 @@ function drawChallengeCard(
   ctx.textAlign = "left";
   ctx.fillText("🔥 StackStreak", pad, pad + 24);
 
-  // Week badge
-  const week = fields.week || "Week 4";
-  ctx.font = `700 ${Math.round(fontSize * 0.7)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
-  const badgeW = ctx.measureText(week).width + 50;
-  const badgeH = Math.round(fontSize);
-  drawRoundedRect(ctx, pad, h * 0.25, badgeW, badgeH, 14);
-  ctx.fillStyle = palette.accent;
-  ctx.fill();
-  ctx.fillStyle = palette.bg1 === "#0a0a0f" ? "#ffffff" : palette.bg1;
-  ctx.textAlign = "left";
-  ctx.fillText(week, pad + 25, h * 0.25 + badgeH * 0.68);
-
   // Title
   ctx.font = `900 ${Math.round(fontSize * 1.3)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   ctx.fillStyle = palette.text;
   ctx.textAlign = "left";
-  ctx.fillText("SAVINGS CHALLENGE", pad, h * 0.25 + badgeH + 70);
+  ctx.fillText("SAVINGS CHALLENGE", pad, h * 0.33);
 
-  // "This week: save $X"
+  // Savings amount
   const amount = fields.amount || "$10";
   ctx.font = `700 ${Math.round(fontSize * 1.7)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   ctx.fillStyle = palette.accent;
-  ctx.fillText(`This week: save ${amount}`, pad, h * 0.5);
+  ctx.fillText(`Save ${amount}`, pad, h * 0.5);
 
   // Progress bar background
   const barY = h * 0.57;
@@ -445,7 +433,7 @@ function drawChallengeCard(
   ctx.font = `500 ${Math.round(fontSize * 0.6)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   ctx.fillStyle = palette.sub;
   ctx.textAlign = "left";
-  ctx.fillText("Week 4 of 52", pad, barY + barH + 35);
+  ctx.fillText("Build your savings streak", pad, barY + barH + 35);
   ctx.textAlign = "right";
   ctx.fillText("$1,378 goal", w - pad, barY + barH + 35);
 
