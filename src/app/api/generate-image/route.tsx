@@ -25,6 +25,11 @@ export async function GET(req: NextRequest) {
   const scheme = schemes[template] || schemes.tip;
   const isOrange = scheme.bg === "#f97316";
 
+  const shortHeadline = headline.length <= 48;
+  const headlineSize = stat ? (headline.length > 70 ? "42px" : "50px") : shortHeadline ? "60px" : headline.length > 90 ? "40px" : "50px";
+  const bodyText = body.length > 95 ? body.substring(0, 95) + "..." : body;
+  const bodySize = bodyText.length > 75 ? "26px" : "30px";
+
   return new ImageResponse(
     (
       <div
@@ -38,7 +43,7 @@ export async function GET(req: NextRequest) {
           background: isOrange
             ? "linear-gradient(135deg, #f97316, #ea580c)"
             : scheme.bg,
-          padding: "80px",
+          padding: "72px",
           fontFamily: "system-ui, sans-serif",
           position: "relative",
         }}
@@ -61,7 +66,7 @@ export async function GET(req: NextRequest) {
         )}
 
         {/* Top: Logo + Badge */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px", width: "100%" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%" }}>
           {/* Logo row */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ fontSize: "48px" }}>🔥</span>
@@ -107,7 +112,7 @@ export async function GET(req: NextRequest) {
           {stat && (
             <div
               style={{
-                fontSize: "96px",
+                fontSize: "88px",
                 fontWeight: 900,
                 color: isOrange ? "#fff" : scheme.accent,
                 lineHeight: 1,
@@ -121,12 +126,13 @@ export async function GET(req: NextRequest) {
           {/* Headline */}
           <div
             style={{
-              fontSize: stat ? "52px" : "64px",
+              fontSize: headlineSize,
               fontWeight: 900,
               color: "#ffffff",
-              lineHeight: 1.1,
+              lineHeight: 1.08,
               letterSpacing: "-1px",
-              maxWidth: "860px",
+              maxWidth: "900px",
+              overflow: "hidden",
             }}
           >
             {headline}
@@ -135,13 +141,14 @@ export async function GET(req: NextRequest) {
           {/* Body */}
           <div
             style={{
-              fontSize: "32px",
+              fontSize: bodySize,
               color: isOrange ? "rgba(255,255,255,0.85)" : "#9ca3af",
-              lineHeight: 1.5,
-              maxWidth: "840px",
+              lineHeight: 1.4,
+              maxWidth: "860px",
+              overflow: "hidden",
             }}
           >
-            {body.length > 120 ? body.substring(0, 120) + "..." : body}
+            {bodyText}
           </div>
         </div>
 
