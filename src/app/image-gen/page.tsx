@@ -272,7 +272,7 @@ function drawTipCard(
   wrapText(ctx, fields.body || "Your body text here.", pad, headlineY + 20, w - pad * 2, Math.round(fontSize * 0.85) * 1.5);
 
   // Bottom pill badge
-  const badgeText = "stackstreak-two.vercel.app";
+  const badgeText = "stackstreak.aivantageworks.com";
   ctx.font = `600 ${Math.round(fontSize * 0.6)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   const badgeW = ctx.measureText(badgeText).width + 60;
   const badgeH = Math.round(fontSize * 0.9);
@@ -359,7 +359,7 @@ function drawStatCard(
   ctx.font = `700 ${Math.round(fontSize * 0.6)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   ctx.fillStyle = palette.accent;
   ctx.textAlign = "center";
-  ctx.fillText("🔥 StackStreak  ·  stackstreak-two.vercel.app", w / 2, h - 60);
+  ctx.fillText("🔥 StackStreak  ·  stackstreak.aivantageworks.com", w / 2, h - 60);
 }
 
 function drawChallengeCard(
@@ -460,7 +460,7 @@ function drawChallengeCard(
   ctx.font = `700 ${Math.round(fontSize * 0.6)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   ctx.fillStyle = palette.accent;
   ctx.textAlign = "center";
-  ctx.fillText("stackstreak-two.vercel.app  ·  Free Savings App 🔥", w / 2, h - 60);
+  ctx.fillText("stackstreak.aivantageworks.com  ·  Free Savings App 🔥", w / 2, h - 60);
 }
 
 function drawInflationCard(
@@ -548,7 +548,7 @@ function drawInflationCard(
   );
 
   // CTA pill
-  const ctaText = "Fight back at stackstreak-two.vercel.app 🔥";
+  const ctaText = "Fight back at stackstreak.aivantageworks.com 🔥";
   ctx.font = `600 ${Math.round(fontSize * 0.6)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   const ctaW = Math.min(ctx.measureText(ctaText).width + 60, w - pad * 2);
   const ctaH = Math.round(fontSize * 0.95);
@@ -662,7 +662,7 @@ function drawStoryCard(
 
   ctx.font = `500 ${Math.round(fontSize * 0.58)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
   ctx.fillStyle = palette.sub;
-  ctx.fillText("stackstreak-two.vercel.app", w / 2, h - 95);
+  ctx.fillText("stackstreak.aivantageworks.com", w / 2, h - 95);
 
   // Swipe up hint
   ctx.font = `500 ${Math.round(fontSize * 0.55)}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
@@ -1397,3 +1397,4 @@ export default function ImageGenPage() {
     </main>
   );
 }
+
