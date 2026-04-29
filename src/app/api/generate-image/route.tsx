@@ -180,7 +180,7 @@ export async function GET(req: NextRequest) {
                 fontWeight: 700,
               }}
             >
-              stackstreak.aivantageworks.com
+              stackstreak.aivantageworks.com • free app
             </span>
           </div>
           <span
