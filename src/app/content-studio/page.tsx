@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Copy, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, Copy, CheckCircle2, Sparkles, Calendar, CheckCircle, Clock } from "lucide-react";
 
 type AppId = "stackstreak" | "createcolor";
 type Platform = "Facebook" | "Instagram" | "Pinterest" | "Reddit";
@@ -15,7 +15,11 @@ type ThemeConfig = {
   subheadline: string;
   stackTemplate?: string;
   createColorTheme?: string;
-  hashtags?: string;
+};
+
+type QueueStatus = {
+  reviewed: boolean;
+  posted: boolean;
 };
 
 const STACK_URL = "https://stackstreak.aivantageworks.com";
@@ -106,6 +110,15 @@ const CONFIG: Record<AppId, { label: string; themes: Record<string, ThemeConfig>
   },
 };
 
+function getTodayIndex() {
+  const day = new Date().getDay();
+  return day === 0 ? 6 : day === 1 ? 1 : day - 1;
+}
+
+function queueKey(app: AppId, themeKey: string, platform: Platform) {
+  return `content_studio_${app}_${themeKey}_${platform}`;
+}
+
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -129,12 +142,28 @@ export default function ContentStudioPage() {
   const [app, setApp] = useState<AppId>("stackstreak");
   const [platform, setPlatform] = useState<Platform>("Facebook");
   const [themeKey, setThemeKey] = useState<string>("savings");
+  const [status, setStatus] = useState<QueueStatus>({ reviewed: false, posted: false });
 
   const appConfig = CONFIG[app];
   const themeEntries = Object.entries(appConfig.themes);
-
   const safeThemeKey = appConfig.themes[themeKey] ? themeKey : themeEntries[0][0];
   const theme = appConfig.themes[safeThemeKey];
+  const todayIndex = getTodayIndex();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(queueKey(app, safeThemeKey, platform));
+      if (raw) setStatus(JSON.parse(raw));
+      else setStatus({ reviewed: false, posted: false });
+    } catch {
+      setStatus({ reviewed: false, posted: false });
+    }
+  }, [app, safeThemeKey, platform]);
+
+  const persistStatus = (next: QueueStatus) => {
+    setStatus(next);
+    localStorage.setItem(queueKey(app, safeThemeKey, platform), JSON.stringify(next));
+  };
 
   const title = useMemo(() => theme.titleByPlatform?.[platform] || theme.headline, [theme, platform]);
   const caption = useMemo(() => theme.captionByPlatform[platform] || theme.captionByPlatform.Facebook || "", [theme, platform]);
@@ -157,6 +186,8 @@ export default function ContentStudioPage() {
     return `${CREATE_URL}/api/marketing-image?${params.toString()}`;
   }, [app, theme]);
 
+  const nextTheme = themeEntries.find(([key]) => key !== safeThemeKey)?.[1]?.label || "Next queue item";
+
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-white">
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5 max-w-6xl mx-auto">
@@ -169,101 +200,136 @@ export default function ContentStudioPage() {
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 grid lg:grid-cols-[320px_1fr] gap-6">
-        <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 space-y-5 h-fit">
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">App</label>
-            <select
-              value={app}
-              onChange={(e) => {
-                const nextApp = e.target.value as AppId;
-                setApp(nextApp);
-                const firstTheme = Object.keys(CONFIG[nextApp].themes)[0];
-                setThemeKey(firstTheme);
-              }}
-              className="w-full rounded-xl bg-[#111118] border border-white/10 px-4 py-3 text-white"
-            >
-              <option value="stackstreak">StackStreak</option>
-              <option value="createcolor">CreateColor</option>
-            </select>
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        <div className="grid md:grid-cols-3 gap-3">
+          <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Today</div>
+            <div className="text-sm font-bold text-white flex items-center gap-2"><Calendar className="w-4 h-4 text-orange-400" /> Day {todayIndex}</div>
+            <div className="text-xs text-gray-400 mt-1">Use this page as your daily review queue</div>
           </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">Platform</label>
-            <select
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value as Platform)}
-              className="w-full rounded-xl bg-[#111118] border border-white/10 px-4 py-3 text-white"
-            >
-              <option>Facebook</option>
-              <option>Instagram</option>
-              <option>Pinterest</option>
-              <option>Reddit</option>
-            </select>
+          <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Status</div>
+            <div className="text-sm font-bold text-white">{status.posted ? "Posted" : status.reviewed ? "Reviewed" : "Pending"}</div>
+            <div className="text-xs text-gray-400 mt-1">Tracked per app + theme + platform</div>
           </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">Theme</label>
-            <select
-              value={safeThemeKey}
-              onChange={(e) => setThemeKey(e.target.value)}
-              className="w-full rounded-xl bg-[#111118] border border-white/10 px-4 py-3 text-white"
-            >
-              {themeEntries.map(([key, value]) => (
-                <option key={key} value={key}>{value.label}</option>
-              ))}
-            </select>
+          <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Next up</div>
+            <div className="text-sm font-bold text-white flex items-center gap-2"><Clock className="w-4 h-4 text-green-400" /> {nextTheme}</div>
+            <div className="text-xs text-gray-400 mt-1">Rotate to the next theme after posting</div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-6">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-orange-400 font-semibold">{appConfig.label} • {platform}</div>
-                <h1 className="text-2xl font-black mt-1">{theme.label}</h1>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <CopyButton text={title} label="Copy Title" />
-                <CopyButton text={caption} label="Copy Caption" />
-                <CopyButton text={`${theme.headline}\n${theme.subheadline}`} label="Copy Image Text" />
-              </div>
+        <div className="grid lg:grid-cols-[320px_1fr] gap-6">
+          <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 space-y-5 h-fit">
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">App</label>
+              <select
+                value={app}
+                onChange={(e) => {
+                  const nextApp = e.target.value as AppId;
+                  setApp(nextApp);
+                  const firstTheme = Object.keys(CONFIG[nextApp].themes)[0];
+                  setThemeKey(firstTheme);
+                }}
+                className="w-full rounded-xl bg-[#111118] border border-white/10 px-4 py-3 text-white"
+              >
+                <option value="stackstreak">StackStreak</option>
+                <option value="createcolor">CreateColor</option>
+              </select>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div className="rounded-2xl bg-orange-500/10 border border-orange-500/20 p-4">
-                <div className="text-xs uppercase tracking-wider text-orange-300 font-semibold mb-2">Title / Hook</div>
-                <div className="text-xl font-bold">{title}</div>
-              </div>
-              <div className="rounded-2xl bg-blue-500/10 border border-blue-500/20 p-4">
-                <div className="text-xs uppercase tracking-wider text-blue-300 font-semibold mb-2">Image Text</div>
-                <div className="text-lg font-bold">{theme.headline}</div>
-                <div className="text-sm text-gray-300 mt-1">{theme.subheadline}</div>
-              </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Platform</label>
+              <select
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value as Platform)}
+                className="w-full rounded-xl bg-[#111118] border border-white/10 px-4 py-3 text-white"
+              >
+                <option>Facebook</option>
+                <option>Instagram</option>
+                <option>Pinterest</option>
+                <option>Reddit</option>
+              </select>
             </div>
 
-            <div className="rounded-2xl bg-[#111118] border border-white/10 p-4">
-              <div className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Caption</div>
-              <pre className="whitespace-pre-wrap text-sm text-gray-200 leading-7 font-sans">{caption}</pre>
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Theme</label>
+              <select
+                value={safeThemeKey}
+                onChange={(e) => setThemeKey(e.target.value)}
+                className="w-full rounded-xl bg-[#111118] border border-white/10 px-4 py-3 text-white"
+              >
+                {themeEntries.map(([key, value]) => (
+                  <option key={key} value={key}>{value.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="pt-2 border-t border-white/5 space-y-2">
+              <button
+                onClick={() => persistStatus({ ...status, reviewed: !status.reviewed })}
+                className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${status.reviewed ? "bg-blue-500/20 text-blue-300 border border-blue-500/30" : "bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200"}`}
+              >
+                {status.reviewed ? "Reviewed ✓" : "Mark Reviewed"}
+              </button>
+              <button
+                onClick={() => persistStatus({ reviewed: true, posted: !status.posted })}
+                className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${status.posted ? "bg-green-500/20 text-green-300 border border-green-500/30" : "bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300"}`}
+              >
+                {status.posted ? "Posted ✓" : "Mark Posted"}
+              </button>
             </div>
           </div>
 
-          <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-6">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-green-400 font-semibold">Direct Image URL</div>
-                <div className="text-sm text-gray-400 mt-1">Open this to preview/download the image</div>
+          <div className="space-y-6">
+            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-6">
+              <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-orange-400 font-semibold">{appConfig.label} • {platform}</div>
+                  <h1 className="text-2xl font-black mt-1">{theme.label}</h1>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <CopyButton text={title} label="Copy Title" />
+                  <CopyButton text={caption} label="Copy Caption" />
+                  <CopyButton text={`${theme.headline}\n${theme.subheadline}`} label="Copy Image Text" />
+                </div>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                <CopyButton text={imageUrl} label="Copy Image URL" />
-                <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30">
-                  Open Image
-                </a>
+
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div className="rounded-2xl bg-orange-500/10 border border-orange-500/20 p-4">
+                  <div className="text-xs uppercase tracking-wider text-orange-300 font-semibold mb-2">Title / Hook</div>
+                  <div className="text-xl font-bold">{title}</div>
+                </div>
+                <div className="rounded-2xl bg-blue-500/10 border border-blue-500/20 p-4">
+                  <div className="text-xs uppercase tracking-wider text-blue-300 font-semibold mb-2">Image Text</div>
+                  <div className="text-lg font-bold">{theme.headline}</div>
+                  <div className="text-sm text-gray-300 mt-1">{theme.subheadline}</div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-[#111118] border border-white/10 p-4">
+                <div className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Caption</div>
+                <pre className="whitespace-pre-wrap text-sm text-gray-200 leading-7 font-sans">{caption}</pre>
               </div>
             </div>
 
-            <div className="rounded-2xl bg-[#111118] border border-white/10 p-4 break-all text-sm text-gray-300">
-              {imageUrl}
+            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-6">
+              <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-green-400 font-semibold">Direct Image URL</div>
+                  <div className="text-sm text-gray-400 mt-1">Open this to preview/download the image</div>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <CopyButton text={imageUrl} label="Copy Image URL" />
+                  <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30">
+                    Open Image
+                  </a>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-[#111118] border border-white/10 p-4 break-all text-sm text-gray-300">
+                {imageUrl}
+              </div>
             </div>
           </div>
         </div>

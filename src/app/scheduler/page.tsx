@@ -132,10 +132,12 @@ function PostCard({
   post,
   status,
   onStatusChange,
+  isToday,
 }: {
   post: PostData;
   status: PostStatus;
   onStatusChange: (day: number, update: Partial<PostStatus>) => void;
+  isToday: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -240,15 +242,21 @@ function PostCard({
       className={`relative bg-white/[0.04] border rounded-2xl p-5 flex flex-col gap-3 transition-all duration-200 ${
         status.done
           ? "border-green-500/30 opacity-60"
-          : "border-white/10 hover:border-orange-500/30"
+          : isToday
+            ? "border-orange-400/60 ring-1 ring-orange-400/30"
+            : "border-white/10 hover:border-orange-500/30"
       }`}
     >
-      {/* Done overlay checkmark */}
-      {status.done && (
-        <div className="absolute top-3 right-3">
-          <CheckCircle className="w-5 h-5 text-green-400" />
+      {/* Status badge */}
+      {status.done ? (
+        <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-green-500/15 border border-green-500/30 px-2 py-1 text-[11px] font-semibold text-green-300">
+          <CheckCircle className="w-3.5 h-3.5" /> Published
         </div>
-      )}
+      ) : isToday ? (
+        <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-orange-500/15 border border-orange-500/30 px-2 py-1 text-[11px] font-semibold text-orange-300">
+          <Calendar className="w-3.5 h-3.5" /> Today
+        </div>
+      ) : null}
 
       {/* Row 1: Day badge + platform + time */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -555,6 +563,11 @@ export default function SchedulerPage() {
 
   const postsGenerated = posts.length;
   const postsDone = Object.values(statuses).filter((s) => s.done).length;
+  const todayDay = (() => {
+    const day = new Date().getDay();
+    return day === 0 ? 6 : day === 1 ? 7 : day - 1;
+  })();
+  const nextPost = posts.find((post) => !statuses[post.day]?.done) ?? null;
 
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-white">
@@ -622,6 +635,26 @@ export default function SchedulerPage() {
               ? `Last generated: ${formatDate(generatedAt)}`
               : "Not generated yet — click a button above to start"}
           </p>
+
+          {posts.length > 0 && (
+            <div className="mt-4 grid md:grid-cols-3 gap-3">
+              <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+                <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Today</div>
+                <div className="text-sm font-bold text-white">Day {todayDay}</div>
+                <div className="text-xs text-gray-400 mt-1">Work through the highlighted card</div>
+              </div>
+              <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+                <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Published</div>
+                <div className="text-sm font-bold text-white">{postsDone} of {postsGenerated}</div>
+                <div className="text-xs text-gray-400 mt-1">Tracks posts you already sent out</div>
+              </div>
+              <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
+                <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Next up</div>
+                <div className="text-sm font-bold text-white line-clamp-1">{nextPost ? nextPost.headline : "All posts published"}</div>
+                <div className="text-xs text-gray-400 mt-1">{nextPost ? `Day ${nextPost.day} • ${nextPost.platform}` : "Queue complete"}</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Loading skeleton */}
@@ -682,6 +715,7 @@ export default function SchedulerPage() {
                     post={post}
                     status={statuses[post.day] ?? defaultStatus()}
                     onStatusChange={handleStatusChange}
+                    isToday={post.day === todayDay}
                   />
                 ))}
               </div>
