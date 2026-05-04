@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
 import week1Pack from "@/lib/week1-scheduler-pack.json";
+import { loadQueue, type ContentQueueItem } from "@/lib/content-queue";
 import {
   Flame,
   ArrowLeft,
@@ -49,6 +50,19 @@ type SchedulerData = {
   statuses: Record<number, PostStatus>;
   generatedAt: string;
 };
+
+function queueItemToPost(item: ContentQueueItem, fallbackDay: number): PostData {
+  return {
+    day: item.scheduledDay || fallbackDay,
+    template: "tip",
+    headline: item.headline,
+    stat: "",
+    body: item.subheadline,
+    platform: item.platform,
+    bestTime: "9:00 AM",
+    topic: item.themeKey,
+  };
+}
 
 const PREBUILT_WEEK_1 = week1Pack as PostData[];
 
@@ -488,6 +502,23 @@ export default function SchedulerPage() {
   // ── Load from localStorage ──
   useEffect(() => {
     try {
+      const queueItems = loadQueue().filter((item) => item.app === "stackstreak");
+      if (queueItems.length > 0) {
+        const mappedPosts = queueItems.map((item, index) => queueItemToPost(item, index + 1));
+        const mappedStatuses: Record<number, PostStatus> = {};
+        queueItems.forEach((item, index) => {
+          mappedStatuses[index + 1] = {
+            done: item.posted,
+            instagramPosted: item.platform === "Instagram" ? item.posted : false,
+            facebookPosted: item.platform === "Facebook" ? item.posted : false,
+          };
+        });
+        setPosts(mappedPosts);
+        setStatuses(mappedStatuses);
+        setGeneratedAt(new Date().toISOString());
+        return;
+      }
+
       const raw = localStorage.getItem(getStorageKey());
       if (raw) {
         const data: SchedulerData = JSON.parse(raw);
@@ -577,12 +608,20 @@ export default function SchedulerPage() {
           <Flame className="text-orange-400 w-6 h-6" />
           <span className="font-black text-lg">StackStreak</span>
         </Link>
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Dashboard
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/content-studio"
+            className="flex items-center gap-1 text-purple-300 hover:text-white text-sm transition-colors"
+          >
+            <Palette className="w-4 h-4" /> Content Studio
+          </Link>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1 text-gray-400 hover:text-white text-sm transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Dashboard
+          </Link>
+        </div>
       </nav>
 
       <div className="max-w-7xl mx-auto px-6 py-8">

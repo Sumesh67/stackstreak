@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Copy, CheckCircle2, Sparkles, Calendar, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Copy, CheckCircle2, Sparkles, Calendar, CheckCircle, Clock, PlusCircle, ListOrdered, ExternalLink, Trash2 } from "lucide-react";
+import { loadQueue, saveQueue, type ContentQueueItem } from "@/lib/content-queue";
 
 type AppId = "stackstreak" | "createcolor";
 type Platform = "Facebook" | "Instagram" | "Pinterest" | "Reddit";
@@ -143,6 +144,9 @@ export default function ContentStudioPage() {
   const [platform, setPlatform] = useState<Platform>("Facebook");
   const [themeKey, setThemeKey] = useState<string>("savings");
   const [status, setStatus] = useState<QueueStatus>({ reviewed: false, posted: false });
+  const [queueCount, setQueueCount] = useState(0);
+  const [queueMessage, setQueueMessage] = useState<string | null>(null);
+  const [queueItems, setQueueItems] = useState<ContentQueueItem[]>([]);
 
   const appConfig = CONFIG[app];
   const themeEntries = Object.entries(appConfig.themes);
@@ -155,8 +159,13 @@ export default function ContentStudioPage() {
       const raw = localStorage.getItem(queueKey(app, safeThemeKey, platform));
       if (raw) setStatus(JSON.parse(raw));
       else setStatus({ reviewed: false, posted: false });
+      const items = loadQueue();
+      setQueueCount(items.length);
+      setQueueItems(items);
     } catch {
       setStatus({ reviewed: false, posted: false });
+      setQueueCount(0);
+      setQueueItems([]);
     }
   }, [app, safeThemeKey, platform]);
 
@@ -188,6 +197,23 @@ export default function ContentStudioPage() {
 
   const nextTheme = themeEntries.find(([key]) => key !== safeThemeKey)?.[1]?.label || "Next queue item";
 
+  const queueItem: ContentQueueItem = {
+    id: `${app}:${platform}:${safeThemeKey}`,
+    app,
+    platform,
+    themeKey: safeThemeKey,
+    themeLabel: theme.label,
+    title,
+    caption,
+    headline: theme.headline,
+    subheadline: theme.subheadline,
+    imageUrl,
+    reviewed: status.reviewed,
+    posted: status.posted,
+    createdAt: new Date().toISOString(),
+    scheduledDay: todayIndex,
+  };
+
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-white">
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/5 max-w-6xl mx-auto">
@@ -201,6 +227,24 @@ export default function ContentStudioPage() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white/[0.04] border border-white/10 px-4 py-2 text-sm text-gray-300">
+          <span><strong>App:</strong> {appConfig.label}</span>
+          <span className="text-white/20">•</span>
+          <span><strong>Platform:</strong> {platform}</span>
+          <span className="text-white/20">•</span>
+          <span><strong>Theme:</strong> {theme.label}</span>
+        </div>
+
+        <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-4">
+          <div className="text-sm font-semibold text-white mb-3">Quick presets</div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => { setApp("stackstreak"); setPlatform("Facebook"); setThemeKey("savings"); }} className="px-3 py-2 rounded-xl bg-orange-500/20 border border-orange-500/30 text-orange-300 text-sm font-semibold">StackStreak + Facebook + Small Savings</button>
+            <button onClick={() => { setApp("stackstreak"); setPlatform("Instagram"); setThemeKey("inflation"); }} className="px-3 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm font-semibold">StackStreak + Instagram + Inflation</button>
+            <button onClick={() => { setApp("createcolor"); setPlatform("Instagram"); setThemeKey("magiclens"); }} className="px-3 py-2 rounded-xl bg-pink-500/20 border border-pink-500/30 text-pink-300 text-sm font-semibold">CreateColor + Instagram + Magic Lens</button>
+            <button onClick={() => { setApp("createcolor"); setPlatform("Pinterest"); setThemeKey("dinosaurs"); }} className="px-3 py-2 rounded-xl bg-green-500/20 border border-green-500/30 text-green-300 text-sm font-semibold">CreateColor + Pinterest + Dinosaurs</button>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-3">
           <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
             <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Today</div>
@@ -215,7 +259,7 @@ export default function ContentStudioPage() {
           <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4">
             <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Next up</div>
             <div className="text-sm font-bold text-white flex items-center gap-2"><Clock className="w-4 h-4 text-green-400" /> {nextTheme}</div>
-            <div className="text-xs text-gray-400 mt-1">Rotate to the next theme after posting</div>
+            <div className="text-xs text-gray-400 mt-1">Queue size: {queueCount} items</div>
           </div>
         </div>
 
@@ -265,6 +309,12 @@ export default function ContentStudioPage() {
               </select>
             </div>
 
+            {queueMessage && (
+              <div className="rounded-xl px-4 py-3 text-sm font-semibold bg-green-500/15 text-green-300 border border-green-500/30">
+                {queueMessage}
+              </div>
+            )}
+
             <div className="pt-2 border-t border-white/5 space-y-2">
               <button
                 onClick={() => persistStatus({ ...status, reviewed: !status.reviewed })}
@@ -277,6 +327,22 @@ export default function ContentStudioPage() {
                 className={`w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${status.posted ? "bg-green-500/20 text-green-300 border border-green-500/30" : "bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300"}`}
               >
                 {status.posted ? "Posted ✓" : "Mark Posted"}
+              </button>
+              <button
+                onClick={() => {
+                  const current = loadQueue();
+                  const existingIndex = current.findIndex((x) => x.id === queueItem.id);
+                  if (existingIndex >= 0) current[existingIndex] = queueItem;
+                  else current.unshift(queueItem);
+                  saveQueue(current);
+                  setQueueCount(current.length);
+                  setQueueItems(current);
+                  setQueueMessage(`Added to queue: ${queueItem.themeLabel} (${queueItem.platform})`);
+                  setTimeout(() => setQueueMessage(null), 2500);
+                }}
+                className="w-full rounded-xl px-4 py-3 text-sm font-semibold transition-colors bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-300"
+              >
+                <span className="inline-flex items-center gap-2"><PlusCircle className="w-4 h-4" /> Add to Queue</span>
               </button>
             </div>
           </div>
@@ -331,6 +397,67 @@ export default function ContentStudioPage() {
                 {imageUrl}
               </div>
             </div>
+          </div>
+
+          <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-purple-400 font-semibold">Queue</div>
+                <div className="text-sm text-gray-400 mt-1">See what&apos;s next and jump between Studio and Scheduler</div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Link href="/scheduler" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30">
+                  <ExternalLink className="w-4 h-4" /> Open Scheduler
+                </Link>
+              </div>
+            </div>
+
+            {queueItems.length === 0 ? (
+              <div className="rounded-2xl bg-[#111118] border border-white/10 p-4 text-sm text-gray-400">
+                No queued items yet. Add one from above to start your publishing flow.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {queueItems.map((item, index) => (
+                  <div key={item.id} className="rounded-2xl bg-[#111118] border border-white/10 p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">{index === 0 ? "Next item" : "Queued item"}</div>
+                        <div className="font-bold text-white mt-1">{item.themeLabel} • {item.platform}</div>
+                        <div className="text-sm text-gray-400 mt-1">{item.app} • {item.title}</div>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {item.reviewed && <span className="text-xs rounded-full px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30">Reviewed</span>}
+                        {item.posted && <span className="text-xs rounded-full px-2 py-1 bg-green-500/20 text-green-300 border border-green-500/30">Posted</span>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => {
+                          setApp(item.app);
+                          setPlatform(item.platform);
+                          setThemeKey(item.themeKey);
+                        }}
+                        className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10"
+                      >
+                        <ListOrdered className="w-4 h-4" /> Load in Studio
+                      </button>
+                      <button
+                        onClick={() => {
+                          const next = queueItems.filter((x) => x.id !== item.id);
+                          saveQueue(next);
+                          setQueueItems(next);
+                          setQueueCount(next.length);
+                        }}
+                        className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30"
+                      >
+                        <Trash2 className="w-4 h-4" /> Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
