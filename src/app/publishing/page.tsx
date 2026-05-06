@@ -34,6 +34,7 @@ type PostStatus = {
   instagramPosted: boolean;
   facebookPosted: boolean;
   pinterestPosted: boolean;
+  redditPosted: boolean;
 };
 
 type ThemeConfig = {
@@ -221,7 +222,7 @@ function postKey(post: PostData): string {
 }
 
 function defaultStatus(): PostStatus {
-  return { done: false, instagramPosted: false, facebookPosted: false, pinterestPosted: false };
+  return { done: false, instagramPosted: false, facebookPosted: false, pinterestPosted: false, redditPosted: false };
 }
 
 function getStorageKey(): string {
@@ -378,7 +379,7 @@ function ImagePreview({ url }: { url: string }) {
 
 // ─── CreateNColor Image Helper ────────────────────────────────────────────────
 
-function CreateColorImageHelper({ headline, body }: { headline: string; body: string }) {
+function CreateColorImageHelper({ headline, body, onClose }: { headline: string; body: string; onClose?: () => void }) {
   const [copied, setCopied] = useState(false);
   const [uploadedImg, setUploadedImg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -408,8 +409,13 @@ function CreateColorImageHelper({ headline, body }: { headline: string; body: st
 
   return (
     <div className="rounded-xl bg-pink-500/[0.06] border border-pink-500/20 p-4 space-y-3">
-      <div className="text-xs text-pink-300 font-semibold flex items-center gap-1.5">
-        <Palette className="w-3.5 h-3.5" /> CreateNColor Image
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-pink-300 font-semibold flex items-center gap-1.5">
+          <Palette className="w-3.5 h-3.5" /> CreateNColor Image
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="text-gray-600 hover:text-gray-300 transition-colors text-xs">✕ hide</button>
+        )}
       </div>
 
       {/* Step 1 — generate */}
@@ -566,6 +572,7 @@ function PostCard({
   const [imgTemplate, setImgTemplate] = useState(() => TEMPLATE_MAP[post.template] ?? "tip");
   const [imgColor, setImgColor] = useState<"orange" | "dark" | "red" | "green">("orange");
   const [imgSize, setImgSize] = useState<"square" | "story">("square");
+  const [helperOpen, setHelperOpen] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   const defaults = useMemo(() => getDefaultParts(post), [post]);
@@ -592,28 +599,39 @@ function PostCard({
     setTimeout(() => setMsg(null), 4500);
   };
 
+  const isCC = post.app === "createcolor";
+
   const handleFacebookHelper = () => {
     navigator.clipboard.writeText(caption).catch(() => {});
-    window.open(imageUrl, "_blank");
+    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
     onStatusChange(key, { facebookPosted: true });
-    showMsg("📋 Caption copied + image opened — save image, then post to Facebook");
+    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then post to Facebook" : "📋 Caption copied + image opened — save image, then post to Facebook");
   };
 
   const handleInstagramHelper = () => {
     navigator.clipboard.writeText(caption).catch(() => {});
-    window.open(imageUrl, "_blank");
+    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
     onStatusChange(key, { instagramPosted: true });
-    showMsg("📋 Caption copied + image opened — save image, then post to Instagram");
+    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then post to Instagram" : "📋 Caption copied + image opened — save image, then post to Instagram");
   };
 
   const handlePinterestHelper = () => {
     navigator.clipboard.writeText(caption).catch(() => {});
-    window.open(imageUrl, "_blank");
+    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
     onStatusChange(key, { pinterestPosted: true });
-    showMsg("📋 Caption copied + image opened — save image, then pin to Pinterest");
+    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then pin to Pinterest" : "📋 Caption copied + image opened — save image, then pin to Pinterest");
   };
 
-  const platforms = post.platform === "Both" ? ["Instagram", "Facebook"] : [post.platform];
+  const handleRedditHelper = () => {
+    navigator.clipboard.writeText(caption).catch(() => {});
+    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
+    onStatusChange(key, { redditPosted: true });
+    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then post to Reddit" : "📋 Caption copied + image opened — save image, then post to Reddit");
+  };
+
+  const platforms = isCC
+    ? ["Instagram", "Facebook", "Pinterest", "Reddit"]
+    : post.platform === "Both" ? ["Instagram", "Facebook"] : [post.platform];
 
   return (
     <div className={`relative bg-white/[0.04] border rounded-2xl p-5 flex flex-col gap-3 transition-all ${
@@ -689,12 +707,14 @@ function PostCard({
         )
       )}
 
-      {/* Image preview — StackStreak uses API, CreateNColor uses manual flow */}
-      {!pendingReplacement && (post.app === "stackstreak" ? (
-        <ImagePreview url={imageUrl} />
-      ) : (
-        <CreateColorImageHelper headline={customHeadline} body={customBody} />
-      ))}
+      {/* Image preview — StackStreak uses API, CreateNColor shows helper when a platform button is clicked */}
+      {!pendingReplacement && (
+        post.app === "stackstreak"
+          ? <ImagePreview url={imageUrl} />
+          : helperOpen
+            ? <CreateColorImageHelper headline={customHeadline} body={customBody} onClose={() => setHelperOpen(false)} />
+            : <p className="text-[11px] text-gray-600 text-center py-1">Click a platform button below to generate &amp; preview your image</p>
+      )}
 
       {/* Image settings toggle */}
       {!pendingReplacement && post.app === "stackstreak" && (
@@ -879,7 +899,7 @@ function PostCard({
       {!pendingReplacement && <div className="flex flex-wrap gap-2">
         <CopyButton text={caption} label="Copy Caption" />
 
-        {(platforms.includes("Facebook") || post.platform === "Both") && (
+        {platforms.includes("Facebook") && (
           <button
             onClick={handleFacebookHelper}
             disabled={status.facebookPosted}
@@ -894,7 +914,7 @@ function PostCard({
           </button>
         )}
 
-        {(platforms.includes("Instagram") || post.platform === "Both") && (
+        {platforms.includes("Instagram") && (
           <button
             onClick={handleInstagramHelper}
             disabled={status.instagramPosted}
@@ -921,6 +941,21 @@ function PostCard({
           >
             <TrendingUp className="w-3.5 h-3.5" />
             {status.pinterestPosted ? "Pinterest ✓" : "Pinterest"}
+          </button>
+        )}
+
+        {platforms.includes("Reddit") && (
+          <button
+            onClick={handleRedditHelper}
+            disabled={status.redditPosted}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              status.redditPosted
+                ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
+                : "bg-orange-600/20 hover:bg-orange-600/30 text-orange-300 border border-orange-600/30"
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            {status.redditPosted ? "Reddit ✓" : "Reddit"}
           </button>
         )}
 
