@@ -217,6 +217,31 @@ function assembleCaption(headline: string, body: string, cta: string, url: strin
   return `${headline}\n\n${body}\n\n${cta} ${url}\n\n${hashtags}`;
 }
 
+function buildPlatformCaption(
+  platform: string,
+  headline: string,
+  body: string,
+  cta: string,
+  url: string,
+  hashtags: string
+): string {
+  const tags = hashtags.split(" ").filter(Boolean);
+  switch (platform) {
+    case "Facebook":
+      // Conversational, shorter hashtag tail (5 max)
+      return `${headline}\n\n${body}\n\n${cta} ${url}\n\n${tags.slice(0, 5).join(" ")}`;
+    case "Pinterest":
+      // No hashtags — Pinterest uses keyword descriptions, not tags
+      return `${headline}\n\n${body}\n\n${url}`;
+    case "Reddit":
+      // No hashtags, no emoji CTA — just content + link
+      return `${headline}\n\n${body}\n\n${url}`;
+    default: // Instagram
+      // Full caption with all hashtags
+      return `${headline}\n\n${body}\n\n${cta} ${url}\n\n${hashtags}`;
+  }
+}
+
 function postKey(post: PostData): string {
   return `${post.app}:${post.day}`;
 }
@@ -573,13 +598,16 @@ function PostCard({
   const [imgColor, setImgColor] = useState<"orange" | "dark" | "red" | "green">("orange");
   const [imgSize, setImgSize] = useState<"square" | "story">("square");
   const [helperOpen, setHelperOpen] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState(
+    post.platform === "Both" ? "Instagram" : post.platform
+  );
   const [msg, setMsg] = useState<string | null>(null);
 
   const defaults = useMemo(() => getDefaultParts(post), [post]);
   const isEdited = customHeadline !== post.headline || customBody !== post.body
     || customCta !== defaults.cta || customUrl !== defaults.url || customHashtags !== defaults.hashtags;
   const key = postKey(post);
-  const caption = assembleCaption(customHeadline, customBody, customCta, customUrl, customHashtags);
+  const caption = buildPlatformCaption(selectedPlatform, customHeadline, customBody, customCta, customUrl, customHashtags);
 
   const imageUrl = useMemo(() => {
     if (post.app !== "stackstreak") return getImageUrl({ ...post, headline: customHeadline, body: customBody });
@@ -601,37 +629,29 @@ function PostCard({
 
   const isCC = post.app === "createcolor";
 
-  const handleFacebookHelper = () => {
-    navigator.clipboard.writeText(caption).catch(() => {});
-    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
-    onStatusChange(key, { facebookPosted: true });
-    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then post to Facebook" : "📋 Caption copied + image opened — save image, then post to Facebook");
+  const handlePlatformClick = (
+    platform: string,
+    statusUpdate: Partial<PostStatus>
+  ) => {
+    setSelectedPlatform(platform);
+    const newCaption = buildPlatformCaption(platform, customHeadline, customBody, customCta, customUrl, customHashtags);
+    navigator.clipboard.writeText(newCaption).catch(() => {});
+    if (isCC) {
+      setHelperOpen(true);
+      showMsg(`📋 ${platform} caption copied — generate image in CreateNColor, then post`);
+    } else {
+      window.open(imageUrl, "_blank");
+      showMsg(`📋 ${platform} caption copied + image opened — save image, then post`);
+    }
+    onStatusChange(key, statusUpdate);
   };
 
-  const handleInstagramHelper = () => {
-    navigator.clipboard.writeText(caption).catch(() => {});
-    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
-    onStatusChange(key, { instagramPosted: true });
-    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then post to Instagram" : "📋 Caption copied + image opened — save image, then post to Instagram");
-  };
+  const handleFacebookHelper  = () => handlePlatformClick("Facebook",  { facebookPosted: true });
+  const handleInstagramHelper = () => handlePlatformClick("Instagram", { instagramPosted: true });
+  const handlePinterestHelper = () => handlePlatformClick("Pinterest", { pinterestPosted: true });
+  const handleRedditHelper    = () => handlePlatformClick("Reddit",    { redditPosted: true });
 
-  const handlePinterestHelper = () => {
-    navigator.clipboard.writeText(caption).catch(() => {});
-    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
-    onStatusChange(key, { pinterestPosted: true });
-    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then pin to Pinterest" : "📋 Caption copied + image opened — save image, then pin to Pinterest");
-  };
-
-  const handleRedditHelper = () => {
-    navigator.clipboard.writeText(caption).catch(() => {});
-    if (isCC) { setHelperOpen(true); } else { window.open(imageUrl, "_blank"); }
-    onStatusChange(key, { redditPosted: true });
-    showMsg(isCC ? "📋 Caption copied — generate your image in CreateNColor, then post to Reddit" : "📋 Caption copied + image opened — save image, then post to Reddit");
-  };
-
-  const platforms = isCC
-    ? ["Instagram", "Facebook", "Pinterest", "Reddit"]
-    : post.platform === "Both" ? ["Instagram", "Facebook"] : [post.platform];
+  const platforms = ["Instagram", "Facebook", "Pinterest", "Reddit"];
 
   return (
     <div className={`relative bg-white/[0.04] border rounded-2xl p-5 flex flex-col gap-3 transition-all ${
@@ -826,7 +846,7 @@ function PostCard({
         onClick={() => setCaptionOpen((v) => !v)}
         className="w-full flex items-center justify-between py-2 px-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 text-xs text-gray-500 hover:text-gray-200 transition-colors font-semibold"
       >
-        <span>Full Caption + Hashtags</span>
+        <span>Caption — <span className="text-white/50">{selectedPlatform}</span></span>
         {captionOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
       </button>}
       {!pendingReplacement && captionOpen && (
@@ -899,65 +919,33 @@ function PostCard({
       {!pendingReplacement && <div className="flex flex-wrap gap-2">
         <CopyButton text={caption} label="Copy Caption" />
 
-        {platforms.includes("Facebook") && (
-          <button
-            onClick={handleFacebookHelper}
-            disabled={status.facebookPosted}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              status.facebookPosted
-                ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
-                : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30"
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            {status.facebookPosted ? "FB Done ✓" : "Facebook"}
-          </button>
-        )}
-
-        {platforms.includes("Instagram") && (
-          <button
-            onClick={handleInstagramHelper}
-            disabled={status.instagramPosted}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              status.instagramPosted
-                ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
-                : "bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/30"
-            }`}
-          >
-            <Camera className="w-3.5 h-3.5" />
-            {status.instagramPosted ? "IG Done ✓" : "Instagram"}
-          </button>
-        )}
-
-        {platforms.includes("Pinterest") && (
-          <button
-            onClick={handlePinterestHelper}
-            disabled={status.pinterestPosted}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              status.pinterestPosted
-                ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
-                : "bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30"
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5" />
-            {status.pinterestPosted ? "Pinterest ✓" : "Pinterest"}
-          </button>
-        )}
-
-        {platforms.includes("Reddit") && (
-          <button
-            onClick={handleRedditHelper}
-            disabled={status.redditPosted}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              status.redditPosted
-                ? "bg-green-500/20 text-green-300 border border-green-500/30 cursor-default"
-                : "bg-orange-600/20 hover:bg-orange-600/30 text-orange-300 border border-orange-600/30"
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5" />
-            {status.redditPosted ? "Reddit ✓" : "Reddit"}
-          </button>
-        )}
+        {([
+          { id: "Facebook",  icon: <Globe className="w-3.5 h-3.5" />,     done: status.facebookPosted,  label: "Facebook",  doneLabel: "FB ✓",        cls: "bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border-blue-500/30",     selCls: "bg-blue-500/30 text-blue-200 border-blue-400/50"   },
+          { id: "Instagram", icon: <Camera className="w-3.5 h-3.5" />,    done: status.instagramPosted, label: "Instagram", doneLabel: "IG ✓",         cls: "bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border-pink-500/30",     selCls: "bg-pink-500/30 text-pink-200 border-pink-400/50"   },
+          { id: "Pinterest", icon: <TrendingUp className="w-3.5 h-3.5" />, done: status.pinterestPosted, label: "Pinterest", doneLabel: "Pinterest ✓", cls: "bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30",         selCls: "bg-red-500/30 text-red-200 border-red-400/50"      },
+          { id: "Reddit",    icon: <Zap className="w-3.5 h-3.5" />,        done: status.redditPosted,    label: "Reddit",    doneLabel: "Reddit ✓",    cls: "bg-orange-600/20 hover:bg-orange-600/30 text-orange-300 border-orange-600/30", selCls: "bg-orange-500/30 text-orange-200 border-orange-400/50" },
+        ] as const).map(({ id, icon, done, label, doneLabel, cls, selCls }) => {
+          const isSelected = selectedPlatform === id;
+          const handlers: Record<string, () => void> = {
+            Facebook: handleFacebookHelper, Instagram: handleInstagramHelper,
+            Pinterest: handlePinterestHelper, Reddit: handleRedditHelper,
+          };
+          return (
+            <button
+              key={id}
+              onClick={handlers[id]}
+              disabled={!isCC && done && !isSelected}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                isSelected ? selCls + " ring-1 ring-white/20"
+                : done && !isCC ? "bg-green-500/20 text-green-300 border-green-500/30 cursor-default"
+                : cls
+              }`}
+            >
+              {icon}
+              {done && !isSelected ? doneLabel : label}
+            </button>
+          );
+        })}
 
         <button
           onClick={() => setEditing((v) => !v)}
