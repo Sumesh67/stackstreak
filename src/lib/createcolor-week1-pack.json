@@ -1,0 +1,72 @@
+[
+  {
+    "day": 1,
+    "template": "dinosaur",
+    "headline": "Free Dinosaur Coloring Pages",
+    "stat": "",
+    "body": "Need an easy activity for dinosaur-loving kids? Turn fun ideas into printable coloring pages in seconds.",
+    "platform": "Pinterest",
+    "bestTime": "9:00 AM",
+    "topic": "dinosaurs"
+  },
+  {
+    "day": 2,
+    "template": "story",
+    "headline": "My kid said: rainbow dragon eating tacos in space",
+    "stat": "",
+    "body": "So I made it a coloring page. That's the fun part of CreateNColor — wild ideas become printable fun in seconds.",
+    "platform": "Both",
+    "bestTime": "7:30 PM",
+    "topic": "imagination"
+  },
+  {
+    "day": 3,
+    "template": "unicorn",
+    "headline": "Unicorn coloring pages in seconds",
+    "stat": "",
+    "body": "If your child loves unicorns, rainbows, and magical creatures, CreateNColor makes fresh printable pages fast.",
+    "platform": "Pinterest",
+    "bestTime": "1:00 PM",
+    "topic": "unicorns"
+  },
+  {
+    "day": 4,
+    "template": "parent",
+    "headline": "Bored kid? Low-energy day?",
+    "stat": "",
+    "body": "Type an idea, speak an idea, or use a photo — then print a coloring page in seconds.",
+    "platform": "Facebook",
+    "bestTime": "8:00 PM",
+    "topic": "rainyday"
+  },
+  {
+    "day": 5,
+    "template": "space",
+    "headline": "Space coloring pages kids can imagine",
+    "stat": "",
+    "body": "Rocket ships, astronauts, planets, and silly space creatures — turn almost any idea into a printable page.",
+    "platform": "Pinterest",
+    "bestTime": "10:00 AM",
+    "topic": "space"
+  },
+  {
+    "day": 6,
+    "template": "tip",
+    "headline": "Make this week easier",
+    "stat": "",
+    "body": "Keep one easy activity ready. CreateNColor helps parents make fresh coloring pages for whatever kids are into this week.",
+    "platform": "Both",
+    "bestTime": "6:30 PM",
+    "topic": "parents"
+  },
+  {
+    "day": 7,
+    "template": "teacher",
+    "headline": "Custom coloring pages for what kids already love",
+    "stat": "",
+    "body": "Great for parents, teachers, and homeschoolers who want activities matched to what kids are already excited about.",
+    "platform": "Reddit",
+    "bestTime": "11:30 AM",
+    "topic": "education"
+  }
+]
