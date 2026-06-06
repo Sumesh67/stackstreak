@@ -12,6 +12,77 @@ export async function GET(req: NextRequest) {
   const colorParam = searchParams.get("color") || "";
   const size = searchParams.get("size") || "square";
 
+  // ── Pinterest vertical template (1000×1500, CreateAndColor branding) ──────
+  if (template === "pinterest") {
+    const PW = 1000, PH = 1500;
+    const headlineFontSize = headline.length > 60 ? "58px" : headline.length > 40 ? "66px" : "76px";
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: `${PW}px`, height: `${PH}px`,
+            display: "flex", flexDirection: "column",
+            background: "linear-gradient(160deg,#7c3aed 0%,#db2777 55%,#f97316 100%)",
+            fontFamily: "system-ui,sans-serif",
+            padding: "80px 72px",
+            position: "relative",
+          }}
+        >
+          {/* Decorative circles */}
+          <div style={{ position:"absolute", top:-80, left:-80, width:320, height:320, borderRadius:"50%", background:"rgba(255,255,255,0.07)", display:"flex" }} />
+          <div style={{ position:"absolute", bottom:-100, right:-100, width:420, height:420, borderRadius:"50%", background:"rgba(255,255,255,0.05)", display:"flex" }} />
+          <div style={{ position:"absolute", top:"40%", right:-60, width:200, height:200, borderRadius:"50%", background:"rgba(255,255,255,0.04)", display:"flex" }} />
+
+          {/* Branding */}
+          <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+            <span style={{ fontSize:"52px" }}>🎨</span>
+            <span style={{ fontSize:"38px", fontWeight:900, color:"#fff", letterSpacing:"-1px" }}>CreateNColor</span>
+          </div>
+
+          {/* Badge */}
+          <div style={{ display:"flex", marginTop:"36px" }}>
+            <div style={{ background:"rgba(255,255,255,0.22)", borderRadius:"100px", padding:"10px 28px", display:"flex" }}>
+              <span style={{ fontSize:"26px", fontWeight:700, color:"#fff" }}>✏️ FREE PRINTABLE</span>
+            </div>
+          </div>
+
+          {/* Main headline */}
+          <div style={{ display:"flex", flex:1, flexDirection:"column", justifyContent:"center", gap:"40px" }}>
+            <div style={{ fontSize:headlineFontSize, fontWeight:900, color:"#fff", lineHeight:1.08, letterSpacing:"-1.5px", maxWidth:"856px" }}>
+              {headline}
+            </div>
+
+            {/* Feature tags */}
+            <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
+              <div style={{ display:"flex", gap:"14px" }}>
+                <div style={{ background:"rgba(255,255,255,0.18)", borderRadius:"100px", padding:"10px 26px", display:"flex" }}>
+                  <span style={{ fontSize:"22px", color:"#fff", fontWeight:600 }}>🖍️ Print at home</span>
+                </div>
+                <div style={{ background:"rgba(255,255,255,0.18)", borderRadius:"100px", padding:"10px 26px", display:"flex" }}>
+                  <span style={{ fontSize:"22px", color:"#fff", fontWeight:600 }}>✨ AI generated</span>
+                </div>
+              </div>
+              <div style={{ display:"flex" }}>
+                <div style={{ background:"rgba(255,255,255,0.18)", borderRadius:"100px", padding:"10px 26px", display:"flex" }}>
+                  <span style={{ fontSize:"22px", color:"#fff", fontWeight:600 }}>🆓 Free to start — no account needed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom URL bar */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingTop:"40px", borderTop:"2px solid rgba(255,255,255,0.25)" }}>
+            <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:"100px", padding:"14px 36px", display:"flex" }}>
+              <span style={{ fontSize:"23px", color:"#fff", fontWeight:700 }}>createandcolor.aivantageworks.com</span>
+            </div>
+            <span style={{ fontSize:"48px" }}>🖍️</span>
+          </div>
+        </div>
+      ),
+      { width: PW, height: PH }
+    );
+  }
+
   const isStory = size === "story";
   const imgW = 1080;
   const imgH = isStory ? 1920 : 1080;

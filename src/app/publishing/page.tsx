@@ -14,7 +14,7 @@ import createcolorPack from "@/lib/createcolor-week1-pack.json";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AppId = "stackstreak" | "createcolor";
-type Tab = "today" | "schedule" | "studio";
+type Tab = "daily" | "today" | "schedule" | "studio" | "pinterest";
 type StudioPlatform = "Facebook" | "Instagram" | "Pinterest" | "Reddit";
 
 type PostData = {
@@ -45,6 +45,14 @@ type ThemeConfig = {
   subheadline: string;
   stackTemplate?: string;
   createColorTheme?: string;
+  board?: string;
+};
+
+type PinterestPin = {
+  id: string;
+  board: string;
+  title: string;
+  description: string;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -123,43 +131,163 @@ const STUDIO_CONFIG: Record<AppId, { label: string; platforms: StudioPlatform[];
   },
   createcolor: {
     label: "CreateNColor",
-    platforms: ["Facebook", "Instagram", "Pinterest"],
+    platforms: ["Pinterest"],
     themes: {
       rainyday: {
         label: "Rainy Day",
+        board: "Rainy Day Activities for Kids",
         captionByPlatform: {
           Facebook: `Stuck inside with bored kids? CreateNColor makes printable coloring pages from almost any idea in seconds. It's a simple rainy-day activity parents can use again and again.\n\n${CREATE_URL}`,
           Instagram: `Rainy day + bored kid + low-energy parent = rough combo 😅\n\nCreateNColor turns almost any idea into a printable coloring page in seconds.\n\n${CREATE_URL}\n\n#rainydayactivities #kidsactivities #momlife #createNcolor`,
-          Pinterest: `Stuck inside with bored kids? CreateNColor makes printable coloring pages from almost any idea in seconds. A simple rainy-day activity parents can use again and again. ${CREATE_URL}`,
+          Pinterest: `Stuck inside with bored kids? CreateNColor makes printable coloring pages from almost any idea in 30 seconds. No supplies needed beyond a printer and crayons. The easiest rainy day activity to set up — and the one kids want to repeat. Free to start. ${CREATE_URL}`,
         },
-        titleByPlatform: { Pinterest: "Easy Rainy Day Activity for Kids" },
+        titleByPlatform: { Pinterest: "Rainy Day Activity for Kids — Printable Coloring Pages in Seconds" },
         headline: "Rainy day? Print this.",
-        subheadline: "Easy kid activity in seconds.",
+        subheadline: "Easy kid activity in 30 seconds.",
         createColorTheme: "rainyday",
       },
       magiclens: {
-        label: "Magic Lens",
+        label: "Photo → Coloring Page",
+        board: "Free Coloring Pages for Kids",
         captionByPlatform: {
           Facebook: `One of the coolest parts of CreateNColor is Magic Lens. Take a photo and turn it into a coloring page. Toys, pets, favorite objects — all fair game.\n\n${CREATE_URL}`,
           Instagram: `Take a photo. Make a coloring page. 📸✨\n\nMagic Lens turns real things into printable fun — toys, pets, favorite objects, random kid obsessions.\n\nTry it free: ${CREATE_URL}\n\n#magiclens #kidsactivities #coloringpages #screenfreeactivities #createNcolor`,
-          Pinterest: `Take a photo and turn it into a printable coloring page with Magic Lens. A fun way to turn favorite toys, pets, and everyday moments into creative kid activities. Try it here: ${CREATE_URL}`,
+          Pinterest: `Upload a photo of your pet, your child's favorite toy, or a family moment — and turn it into a custom printable coloring page. CreateAndColor's Magic Lens makes personalized coloring pages no one else has. Free to start. ${CREATE_URL}`,
         },
-        titleByPlatform: { Pinterest: "Turn Photos Into Coloring Pages" },
+        titleByPlatform: { Pinterest: "Turn Any Photo Into a Printable Coloring Page" },
         headline: "Take a photo. Make a coloring page.",
         subheadline: "Magic Lens turns real things into printable fun.",
         createColorTheme: "magiclens",
       },
       dinosaurs: {
         label: "Dinosaurs",
+        board: "Dinosaur Coloring Pages",
         captionByPlatform: {
           Facebook: `If your kid loves dinosaurs, this is an easy one. CreateNColor lets you turn fun ideas into printable coloring pages in seconds. Great for quiet time, homeschool, or rainy-day fun.\n\nTry it here: ${CREATE_URL}`,
           Instagram: `Need an easy win for a dinosaur-loving kid? 🦖\n\nCreateNColor turns fun ideas into printable coloring pages in seconds.\n\nTry it free: ${CREATE_URL}\n\n#kidsactivities #dinosaurcoloringpages #printablesforkids #momlife #screenfreeactivities #createNcolor`,
-          Pinterest: `Need an easy activity for dinosaur-loving kids? CreateNColor lets you turn fun ideas into printable coloring pages in seconds. ${CREATE_URL}`,
+          Pinterest: `Free printable dinosaur coloring pages for kids. T-Rex at a birthday party, Triceratops in the jungle, Brachiosaurus eating pizza — type any dinosaur idea and get a custom coloring page ready to print in seconds. CreateAndColor is free to start. ${CREATE_URL}`,
         },
-        titleByPlatform: { Pinterest: "Free Dinosaur Coloring Pages for Kids" },
+        titleByPlatform: { Pinterest: "Free Dinosaur Coloring Pages for Kids — Print Any Scene" },
         headline: "Free Dinosaur Coloring Pages",
-        subheadline: "Make one in seconds.",
+        subheadline: "Any dinosaur, any scene, in seconds.",
         createColorTheme: "dinosaurs",
+      },
+      unicorns: {
+        label: "Unicorns",
+        board: "Unicorn Coloring Pages",
+        captionByPlatform: {
+          Facebook: `If your kid loves unicorns, CreateNColor makes fresh printable coloring pages for any unicorn idea. Rainbow manes, sparkly wings, magical forests — type it and print it in seconds.\n\nTry it free: ${CREATE_URL}`,
+          Instagram: `Rainbow manes. Sparkly wings. Magical forests. ✨\n\nCreateNColor turns any unicorn idea into a printable coloring page in seconds.\n\nTry it free: ${CREATE_URL}\n\n#unicorncoloringpages #kidsactivities #printablesforkids #momlife #createNcolor`,
+          Pinterest: `Free printable unicorn coloring pages for kids. Custom designs — rainbow manes, sparkly wings, magical forests, unicorns with crowns. Let kids describe their own unicorn and print a one-of-a-kind coloring page in seconds with CreateAndColor. Free to start. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Free Unicorn Coloring Pages — Custom Printable for Kids" },
+        headline: "Free Unicorn Coloring Pages",
+        subheadline: "Any unicorn idea, printed in seconds.",
+        createColorTheme: "unicorns",
+      },
+      space: {
+        label: "Space",
+        board: "Space Coloring Pages for Kids",
+        captionByPlatform: {
+          Facebook: `Rockets, astronauts, silly aliens, and planets with faces — CreateNColor turns any space idea into a printable coloring page in seconds. Great for kids obsessed with space.\n\nTry it free: ${CREATE_URL}`,
+          Instagram: `Rockets. Aliens. Planets with googly eyes. 🚀\n\nCreateNColor turns any space idea into a printable coloring page in seconds.\n\n${CREATE_URL}\n\n#spacecoloringpages #kidsactivities #printablesforkids #homeschool #createNcolor`,
+          Pinterest: `Free printable space coloring pages for kids. Rockets, astronauts, silly aliens, planets with faces — type any space idea into CreateAndColor and print a custom coloring page instantly. Great for homeschool and rainy days. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Free Space Coloring Pages — Printable for Kids" },
+        headline: "Free Space Coloring Pages",
+        subheadline: "Rockets, aliens, planets — print any idea.",
+        createColorTheme: "space",
+      },
+      ocean: {
+        label: "Ocean & Mermaids",
+        board: "Ocean & Mermaid Coloring Pages",
+        captionByPlatform: {
+          Facebook: `Mermaids, sharks, friendly octopuses, underwater castles — CreateNColor turns any ocean idea into a printable coloring page in seconds. Perfect for kids who love the sea.\n\nTry it free: ${CREATE_URL}`,
+          Instagram: `Mermaids. Sharks. Underwater castles. 🐠\n\nCreateNColor turns any ocean idea into a printable coloring page in seconds.\n\n${CREATE_URL}\n\n#mermaidcoloringpages #kidsactivities #printablesforkids #screenfreeactivities #createNcolor`,
+          Pinterest: `Free printable mermaid and ocean coloring pages for kids. Mermaids with fish friends, sharks, seahorses, underwater castles — generate any ocean scene and print instantly with CreateAndColor. Free to start. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Free Mermaid Coloring Pages — Printable Ocean Fun for Kids" },
+        headline: "Free Mermaid Coloring Pages",
+        subheadline: "Ocean adventures printed in seconds.",
+        createColorTheme: "ocean",
+      },
+      animals: {
+        label: "Animals",
+        board: "Animal Coloring Pages for Kids",
+        captionByPlatform: {
+          Facebook: `Whatever animal your kid is obsessed with this week — CreateNColor makes a custom printable coloring page for it in seconds. Dogs, cats, horses, elephants, pandas — any animal, any scene.\n\nTry it free: ${CREATE_URL}`,
+          Instagram: `Dogs. Cats. Pandas. Baby elephants. 🐼\n\nWhatever animal your kid loves — CreateNColor makes a printable coloring page for it in seconds.\n\n${CREATE_URL}\n\n#animalcoloringpages #kidsactivities #printablesforkids #momlife #createNcolor`,
+          Pinterest: `Free printable animal coloring pages for kids. Dogs, cats, horses, elephants, pandas — type any animal idea and get a custom printable coloring page in seconds. CreateAndColor makes fresh designs every time. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Free Animal Coloring Pages — Any Animal, Printable" },
+        headline: "Animal Coloring Pages",
+        subheadline: "Any animal, any scene, in seconds.",
+        createColorTheme: "animals",
+      },
+      princess: {
+        label: "Princess",
+        board: "Princess Coloring Pages",
+        captionByPlatform: {
+          Facebook: `Every princess is different. CreateNColor lets kids design their own — crown, dress, setting, sidekick. Turn any princess idea into a printable coloring page in seconds.\n\nTry it free: ${CREATE_URL}`,
+          Instagram: `Your kid's princess. Their design. 👑\n\nCrown, dress, castle, magical pet — CreateNColor turns any princess idea into a printable coloring page in seconds.\n\n${CREATE_URL}\n\n#princesscoloringpages #kidsactivities #printablesforkids #momlife #createNcolor`,
+          Pinterest: `Free printable princess coloring pages for kids. Custom designs — any crown, any dress, any magical kingdom. Let kids describe their own princess and print a unique coloring page in seconds with CreateAndColor. Free to start. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Free Princess Coloring Pages — Custom Printable for Kids" },
+        headline: "Princess Coloring Pages",
+        subheadline: "Their princess, their design.",
+        createColorTheme: "princess",
+      },
+      birthday: {
+        label: "Birthday Party Pack",
+        board: "Birthday Party Printables",
+        captionByPlatform: {
+          Facebook: `Planning a birthday party? CreateNColor makes custom 20-page coloring books for any theme — dinosaurs, unicorns, superheroes, princesses. Print at home in minutes.\n\nBirthday Party Pack: ${CREATE_URL}`,
+          Instagram: `Custom birthday coloring book. ✏️🎂\n\n20 pages. Any theme. Print at home. Kids love coloring at parties.\n\n${CREATE_URL}\n\n#birthdayparty #kidspartyideas #printablesforkids #momlife #createNcolor`,
+          Pinterest: `Printable birthday party coloring book for kids — 20 custom pages for any theme your child loves. Dinosaurs, unicorns, superheroes, mermaids. Print at home in minutes. The easiest party activity that costs almost nothing. CreateAndColor Birthday Pack: ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Birthday Party Coloring Book — Custom Printable, Any Theme" },
+        headline: "Custom Birthday Coloring Book",
+        subheadline: "20 pages. Any theme. Print at home.",
+        createColorTheme: "birthday",
+      },
+      farmanimals: {
+        label: "Farm Animals",
+        board: "Farm Animal Coloring Pages",
+        captionByPlatform: {
+          Facebook: `Pigs, cows, chickens, horses, and more — CreateNColor makes custom farm animal coloring pages for kids in seconds. Great for learning, quiet time, and homeschool units.\n\nTry it free: ${CREATE_URL}`,
+          Instagram: `Pigs. Cows. Chickens. Baby goats. 🐄\n\nCreateNColor makes printable farm animal coloring pages in seconds — great for learning and quiet time.\n\n${CREATE_URL}\n\n#farmanimals #kidsactivities #printablesforkids #homeschool #createNcolor`,
+          Pinterest: `Free printable farm animal coloring pages for kids. Pigs, cows, chickens, horses, goats — generate any farm scene and print instantly. Great for homeschool, classroom learning, and quiet time activities. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Free Farm Animal Coloring Pages — Printable for Kids" },
+        headline: "Farm Animal Coloring Pages",
+        subheadline: "Pigs, cows, chickens — print any farm idea.",
+        createColorTheme: "farmanimals",
+      },
+      homeschool: {
+        label: "Homeschool & Teachers",
+        board: "Homeschool Printables & Worksheets",
+        captionByPlatform: {
+          Facebook: `Teaching a unit on farm animals, ocean life, or space? CreateNColor makes printable coloring pages matched to your lesson topic in seconds. Free for homeschoolers and teachers.\n\nFree worksheets: ${CREATE_URL}`,
+          Instagram: `Coloring pages that match your lesson. 📚✏️\n\nFarm animals, ocean life, seasons — CreateNColor makes custom printable pages for any homeschool unit in seconds.\n\n${CREATE_URL}\n\n#homeschool #homeschoolfun #teachersofinstagram #printablesforkids #createNcolor`,
+          Pinterest: `Free homeschool printables — custom coloring pages matched to any lesson topic. Farm animals, ocean life, seasons, science, history. Generate and print any educational coloring page in seconds. Free for teachers and homeschoolers. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Free Homeschool Printables — Custom Coloring Pages for Any Lesson" },
+        headline: "Coloring Pages for Homeschool",
+        subheadline: "Match any lesson topic, instantly.",
+        createColorTheme: "homeschool",
+      },
+      screenfree: {
+        label: "Screen-Free Activity",
+        board: "Screen-Free Kids Activities",
+        captionByPlatform: {
+          Facebook: `Need a screen-free activity that kids actually want to do? Let them design their own coloring page — type any idea, print it, and color it. CreateNColor makes it happen in 30 seconds.\n\n${CREATE_URL}`,
+          Instagram: `Screen-free. No setup. Kids love it. 🖍️\n\nType an idea. Print a coloring page. Done in 30 seconds.\n\n${CREATE_URL}\n\n#screenfreeactivities #kidsactivities #printablesforkids #momlife #createNcolor`,
+          Pinterest: `Screen-free activity for kids that takes 30 seconds to set up. Let kids type or speak any idea, generate a custom coloring page, and print. No supplies needed beyond a printer and crayons. CreateAndColor is free to start. ${CREATE_URL}`,
+        },
+        titleByPlatform: { Pinterest: "Screen-Free Activity for Kids — Custom Printable Coloring Pages" },
+        headline: "Screen-Free in 30 Seconds",
+        subheadline: "Type → Print → Color.",
+        createColorTheme: "screenfree",
       },
     },
   },
@@ -269,13 +397,161 @@ const STACKSTREAK_BACKUPS: Array<Omit<PostData, "day" | "app">> = [
 ];
 
 const CREATECOLOR_BACKUPS: Array<Omit<PostData, "day" | "app">> = [
-  { template: "tip",     headline: "Ocean coloring pages kids will love",                stat: "", body: "Sharks, seahorses, silly fish, treasure chests — type any ocean idea into CreateNColor and print a fresh page.", platform: "Pinterest", bestTime: "10:00 AM", topic: "default"    },
-  { template: "story",   headline: "My daughter said: purple horse with wings and a crown", stat: "", body: "10 seconds later, she had a coloring page. That's CreateNColor.",                                              platform: "Both",      bestTime: "7:00 PM",  topic: "imagination"},
-  { template: "tip",     headline: "Animal coloring pages for any obsession",            stat: "", body: "Whatever animal your kid is into this week — CreateNColor makes a custom printable page in seconds.",               platform: "Pinterest", bestTime: "11:00 AM", topic: "default"    },
-  { template: "parent",  headline: "Screen-free activity that takes 30 seconds to set up", stat: "", body: "Type an idea. Print a coloring page. Hand it to your kid. Done. Easiest quiet-time activity you'll find.",      platform: "Facebook",  bestTime: "8:30 PM",  topic: "parents"    },
-  { template: "tip",     headline: "Superhero coloring pages kids design themselves",    stat: "", body: "Let kids name their own superhero and describe their powers. CreateNColor turns the idea into a printable page.",   platform: "Both",      bestTime: "5:00 PM",  topic: "imagination"},
-  { template: "teacher", headline: "Coloring pages matched to your lesson theme",        stat: "", body: "Teaching oceans, farms, seasons, or animals? CreateNColor makes printable pages for your lesson in seconds.",      platform: "Reddit",    bestTime: "4:00 PM",  topic: "education"  },
-  { template: "tip",     headline: "Princess and fairy coloring pages on demand",        stat: "", body: "Mix characters, settings, and accessories. CreateNColor matches exactly what your child loves this week.",          platform: "Pinterest", bestTime: "1:30 PM",  topic: "default"    },
+  { template: "tip",     headline: "Free Ocean Coloring Pages — Sharks, Seahorses & More", stat: "", body: "Sharks, seahorses, silly fish, treasure chests — type any ocean idea into CreateNColor and print a fresh page.", platform: "Pinterest", bestTime: "10:00 AM", topic: "default"    },
+  { template: "story",   headline: "Turn Any Kid's Idea Into a Printable Coloring Page",   stat: "", body: "My daughter said: purple horse with wings and a crown. 10 seconds later, she had a coloring page. That's CreateNColor.", platform: "Pinterest", bestTime: "7:00 PM",  topic: "imagination"},
+  { template: "tip",     headline: "Free Animal Coloring Pages — Any Animal, Printable",   stat: "", body: "Whatever animal your kid is into this week — CreateNColor makes a custom printable page in seconds.",               platform: "Pinterest", bestTime: "11:00 AM", topic: "default"    },
+  { template: "parent",  headline: "Screen-Free Activity for Kids — Printable in 30 Seconds", stat: "", body: "Type an idea. Print a coloring page. Hand it to your kid. Done. Easiest quiet-time activity you'll find.",   platform: "Pinterest", bestTime: "8:30 PM",  topic: "parents"    },
+  { template: "tip",     headline: "Free Superhero Coloring Pages — Kids Design Their Own", stat: "", body: "Let kids name their own superhero and describe their powers. CreateNColor turns the idea into a printable page.", platform: "Pinterest", bestTime: "5:00 PM",  topic: "imagination"},
+  { template: "teacher", headline: "Free Homeschool Printables — Custom Coloring Pages",   stat: "", body: "Teaching oceans, farms, seasons, or animals? CreateNColor makes printable pages for your lesson in seconds.",    platform: "Pinterest", bestTime: "4:00 PM",  topic: "education"  },
+  { template: "tip",     headline: "Free Princess Coloring Pages — Custom Printable",      stat: "", body: "Mix characters, settings, and accessories. CreateNColor matches exactly what your child loves this week.",        platform: "Pinterest", bestTime: "1:30 PM",  topic: "default"    },
+];
+
+// ─── Pinterest Engine Data ────────────────────────────────────────────────────
+
+const PINTEREST_BOARDS = [
+  { name: "Free Coloring Pages for Kids",     note: "Main board — cross-pin everything here" },
+  { name: "Dinosaur Coloring Pages",           note: "" },
+  { name: "Unicorn Coloring Pages",            note: "" },
+  { name: "Animal Coloring Pages for Kids",    note: "" },
+  { name: "Ocean & Mermaid Coloring Pages",    note: "" },
+  { name: "Space Coloring Pages for Kids",     note: "" },
+  { name: "Rainy Day Activities for Kids",     note: "" },
+  { name: "Birthday Party Printables",         note: "" },
+  { name: "Homeschool Printables & Worksheets", note: "" },
+  { name: "Screen-Free Kids Activities",       note: "" },
+];
+
+const PINTEREST_PINS: PinterestPin[] = [
+  // ── Free Coloring Pages for Kids (Main) ──
+  {
+    id: "p01",
+    board: "Free Coloring Pages for Kids",
+    title: "Free Custom Coloring Pages for Kids — AI Generated in Seconds",
+    description: `Create free printable coloring pages with AI — just type any idea and get a custom coloring page ready to print. Kids love designing their own pages: favorite animals, characters, made-up creatures, wild scenes. No art skills needed. Print instantly at home. ${CREATE_URL}`,
+  },
+  {
+    id: "p02",
+    board: "Free Coloring Pages for Kids",
+    title: "Turn Any Kid's Idea Into a Printable Coloring Page",
+    description: `Your child says "a purple elephant flying a kite at the beach" — and now it's a printable coloring page. CreateAndColor turns any idea into clean line art in seconds. Free to start. Works for home, classroom, and rainy days. ${CREATE_URL}`,
+  },
+  {
+    id: "p03",
+    board: "Free Coloring Pages for Kids",
+    title: "Photo to Coloring Page — Turn Any Picture Into Printable Art",
+    description: `Upload a photo of your pet, your child's favorite toy, or a family moment — and turn it into a custom printable coloring page. CreateAndColor's Magic Lens makes personalized coloring pages no one else has. Free to try. ${CREATE_URL}`,
+  },
+  // ── Dinosaur Coloring Pages ──
+  {
+    id: "p04",
+    board: "Dinosaur Coloring Pages",
+    title: "Free Dinosaur Coloring Pages for Kids — Print Any Scene",
+    description: `Free printable dinosaur coloring pages for kids. T-Rex at a birthday party, Triceratops in the jungle, Brachiosaurus eating pizza — type any dinosaur idea and get a custom coloring page in seconds. CreateAndColor is free to start. ${CREATE_URL}`,
+  },
+  {
+    id: "p05",
+    board: "Dinosaur Coloring Pages",
+    title: "T-Rex Coloring Pages Free Printable — Any Scene Your Kid Can Imagine",
+    description: `Free T-Rex coloring pages to print at home. A T-Rex doing sports, wearing a crown, in a birthday hat — whatever your kid imagines, CreateAndColor generates it as a printable coloring page in seconds. Fresh designs every time. ${CREATE_URL}`,
+  },
+  // ── Unicorn Coloring Pages ──
+  {
+    id: "p06",
+    board: "Unicorn Coloring Pages",
+    title: "Free Unicorn Coloring Pages — Custom Printable for Kids",
+    description: `Free printable unicorn coloring pages kids design themselves. Rainbow manes, sparkly wings, magical forests, unicorns with crowns — describe any unicorn scene and print a one-of-a-kind coloring page in seconds with CreateAndColor. ${CREATE_URL}`,
+  },
+  {
+    id: "p07",
+    board: "Unicorn Coloring Pages",
+    title: "Magical Creature Coloring Pages — Dragons, Unicorns, Fairies",
+    description: `Free printable fantasy coloring pages for kids. Dragons breathing confetti, unicorns with rainbow wings, fairies in flower houses — type any magical creature idea and get a fresh coloring page to print. CreateAndColor is free. ${CREATE_URL}`,
+  },
+  // ── Animal Coloring Pages ──
+  {
+    id: "p08",
+    board: "Animal Coloring Pages for Kids",
+    title: "Free Animal Coloring Pages — Any Animal, Any Scene, Printable",
+    description: `Free printable animal coloring pages for kids. Dogs, cats, horses, elephants, pandas, baby animals — type any animal idea and get a custom printable coloring page in seconds. CreateAndColor makes fresh designs every time. ${CREATE_URL}`,
+  },
+  {
+    id: "p09",
+    board: "Animal Coloring Pages for Kids",
+    title: "Dog Coloring Pages Free Printable — Any Breed or Scene",
+    description: `Free printable dog coloring pages for kids. Golden retrievers playing fetch, puppies in costumes, dogs on adventures — create any dog scene and print it instantly. Great for dog-loving kids and easy rainy day fun. ${CREATE_URL}`,
+  },
+  {
+    id: "p10",
+    board: "Animal Coloring Pages for Kids",
+    title: "Cat Coloring Pages Free Printable — Silly, Sweet, and Custom",
+    description: `Free printable cat coloring pages with a twist — kids pick the cat's personality, outfit, and setting. Cats in space, cats wearing hats, cats chasing butterflies. Fresh printable coloring pages every time. ${CREATE_URL}`,
+  },
+  // ── Ocean & Mermaid ──
+  {
+    id: "p11",
+    board: "Ocean & Mermaid Coloring Pages",
+    title: "Free Mermaid Coloring Pages — Printable Ocean Fun for Kids",
+    description: `Free printable mermaid coloring pages for kids. Mermaids with fish friends, underwater castles, glittery tails, seahorse companions — describe any mermaid scene and print a custom coloring page in seconds with CreateAndColor. ${CREATE_URL}`,
+  },
+  {
+    id: "p12",
+    board: "Ocean & Mermaid Coloring Pages",
+    title: "Ocean Coloring Pages Free Printable — Sharks, Seahorses & More",
+    description: `Free printable ocean coloring pages for kids. Sharks, seahorses, friendly octopuses, treasure chests, underwater cities — type any ocean idea into CreateAndColor and print instantly. Great for a beach unit or rainy day. ${CREATE_URL}`,
+  },
+  // ── Space ──
+  {
+    id: "p13",
+    board: "Space Coloring Pages for Kids",
+    title: "Free Space Coloring Pages — Rockets, Aliens & Planets Printable",
+    description: `Free printable space coloring pages for kids. Rockets, astronauts, silly aliens, planets with faces — type any space idea and print a custom coloring page in seconds. Great for homeschool science units and rainy days. ${CREATE_URL}`,
+  },
+  // ── Rainy Day ──
+  {
+    id: "p14",
+    board: "Rainy Day Activities for Kids",
+    title: "Rainy Day Activity for Kids — Custom Coloring Pages in 30 Seconds",
+    description: `The easiest rainy day activity: let kids type their own idea, generate a coloring page, and print it. No setup, no supplies except crayons. CreateAndColor is free to start and kids want to make page after page. ${CREATE_URL}`,
+  },
+  {
+    id: "p15",
+    board: "Rainy Day Activities for Kids",
+    title: "Easy Indoor Activity for Kids — Printable Coloring Pages Any Theme",
+    description: `Stuck inside with bored kids? CreateAndColor makes fresh printable coloring pages from any idea in seconds. Whatever kids are into this week — dinosaurs, space, mermaids, dogs — print a custom coloring page for it. Free to start. ${CREATE_URL}`,
+  },
+  // ── Birthday Party ──
+  {
+    id: "p16",
+    board: "Birthday Party Printables",
+    title: "Birthday Party Coloring Book — Custom Printable, Any Theme",
+    description: `Create a custom birthday coloring book for your child's party. Pick a theme, generate 20 unique pages, print and staple. Dinosaurs, unicorns, superheroes, mermaids — any theme, ready in minutes. Kids love coloring their own story. ${CREATE_URL}`,
+  },
+  {
+    id: "p17",
+    board: "Birthday Party Printables",
+    title: "Personalized Birthday Coloring Pages — Printable Party Activity",
+    description: `The easiest birthday party activity: a custom coloring book with your child's name on the cover and their favorite theme inside. 20 pages, print at home, costs almost nothing. CreateAndColor Birthday Pack — free to start. ${CREATE_URL}`,
+  },
+  // ── Homeschool ──
+  {
+    id: "p18",
+    board: "Homeschool Printables & Worksheets",
+    title: "Free Homeschool Printables — Coloring Pages for Any Lesson Topic",
+    description: `Free homeschool printables that match your lesson. Teaching farm animals, ocean life, seasons, or space? Generate a custom coloring page for your exact topic in seconds. CreateAndColor is free for teachers and homeschoolers. ${CREATE_URL}`,
+  },
+  {
+    id: "p19",
+    board: "Homeschool Printables & Worksheets",
+    title: "Kindergarten Coloring Pages Free Printable — Kids Choose the Topic",
+    description: `Free kindergarten coloring pages where kids pick the subject. Simple, bold line art for little hands. Animals, vehicles, seasons, favorite characters — generate and print any idea in seconds. Free for teachers and parents. ${CREATE_URL}`,
+  },
+  // ── Screen-Free ──
+  {
+    id: "p20",
+    board: "Screen-Free Kids Activities",
+    title: "Screen-Free Activity for Kids — Custom Printable Coloring Pages",
+    description: `Screen-free activity that takes 30 seconds to set up: let kids type or speak any idea, generate a coloring page, and print. No screens required after printing. No ads, no apps. Just crayons and imagination. Free at CreateAndColor. ${CREATE_URL}`,
+  },
 ];
 
 // ─── Shared UI ────────────────────────────────────────────────────────────────
@@ -924,7 +1200,7 @@ function PostCard({
           { id: "Instagram", icon: <Camera className="w-3.5 h-3.5" />,    done: status.instagramPosted, label: "Instagram", doneLabel: "IG ✓",         cls: "bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border-pink-500/30",     selCls: "bg-pink-500/30 text-pink-200 border-pink-400/50"   },
           { id: "Pinterest", icon: <TrendingUp className="w-3.5 h-3.5" />, done: status.pinterestPosted, label: "Pinterest", doneLabel: "Pinterest ✓", cls: "bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/30",         selCls: "bg-red-500/30 text-red-200 border-red-400/50"      },
           { id: "Reddit",    icon: <Zap className="w-3.5 h-3.5" />,        done: status.redditPosted,    label: "Reddit",    doneLabel: "Reddit ✓",    cls: "bg-orange-600/20 hover:bg-orange-600/30 text-orange-300 border-orange-600/30", selCls: "bg-orange-500/30 text-orange-200 border-orange-400/50" },
-        ] as const).map(({ id, icon, done, label, doneLabel, cls, selCls }) => {
+        ] as const).filter(({ id }) => !isCC || id === "Pinterest").map(({ id, icon, done, label, doneLabel, cls, selCls }) => {
           const isSelected = selectedPlatform === id;
           const handlers: Record<string, () => void> = {
             Facebook: handleFacebookHelper, Instagram: handleInstagramHelper,
@@ -1186,6 +1462,13 @@ function StudioTab() {
             <div className="text-xs text-orange-300 font-semibold uppercase tracking-wider mb-1">Title / Hook</div>
             <div className="text-lg font-bold">{title}</div>
           </div>
+          {platform === "Pinterest" && theme.board && (
+            <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-4 space-y-1.5">
+              <div className="text-xs text-red-300 font-semibold uppercase tracking-wider">Pin to Board</div>
+              <div className="font-bold text-white">{theme.board}</div>
+              <div className="text-xs text-gray-500">Pinterest is a search engine — no hashtags, keyword-rich description, vertical image (2:3)</div>
+            </div>
+          )}
           {noCaption ? (
             <div className="rounded-2xl bg-yellow-500/10 border border-yellow-500/20 p-4 text-sm text-yellow-300">
               No pre-written caption for this platform + theme. Write your own below or switch platform.
@@ -1223,10 +1506,615 @@ function StudioTab() {
   );
 }
 
+// ─── Pinterest Engine Tab ─────────────────────────────────────────────────────
+
+function PinterestTab() {
+  const [boardFilter, setBoardFilter] = useState<string>("all");
+  const [boardsOpen, setBoardsOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const filteredPins = boardFilter === "all"
+    ? PINTEREST_PINS
+    : PINTEREST_PINS.filter((p) => p.board === boardFilter);
+
+  const handleCopy = async (id: string, text: string) => {
+    try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1800);
+  };
+
+  const uniqueBoards = Array.from(new Set(PINTEREST_PINS.map((p) => p.board)));
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-black flex items-center gap-2">
+          <TrendingUp className="w-6 h-6 text-red-400" /> Pinterest Engine
+        </h1>
+        <p className="text-gray-400 text-sm mt-1">
+          20 SEO-optimized pins across 10 keyword boards — ready to copy and schedule
+        </p>
+      </div>
+
+      {/* How Pinterest works */}
+      <div className="bg-red-500/[0.06] border border-red-500/20 rounded-2xl p-5 space-y-3">
+        <div className="text-xs text-red-300 font-semibold uppercase tracking-wider">Pinterest is a search engine, not a social feed</div>
+        <div className="grid sm:grid-cols-3 gap-3 text-xs text-gray-400">
+          <div className="bg-white/[0.03] rounded-xl p-3 space-y-1">
+            <div className="text-white font-semibold">No hashtags</div>
+            <div>Pinterest uses keywords in descriptions. Hashtags don&apos;t help — write naturally with search terms built in.</div>
+          </div>
+          <div className="bg-white/[0.03] rounded-xl p-3 space-y-1">
+            <div className="text-white font-semibold">Vertical images (2:3)</div>
+            <div>1000×1500px. Generate your image in CreateAndColor, screenshot it in portrait mode, or use Canva. Vertical pins get 60% more traffic.</div>
+          </div>
+          <div className="bg-white/[0.03] rounded-xl p-3 space-y-1">
+            <div className="text-white font-semibold">Post 3–5 pins/day</div>
+            <div>Space them out. Pin to the specific board first, then cross-pin to &quot;Free Coloring Pages for Kids&quot; (your main board).</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Board Setup */}
+      <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
+        <button
+          onClick={() => setBoardsOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.03] transition-colors"
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Globe className="w-4 h-4 text-red-400" /> Board Setup — Create These 10 Boards on Pinterest
+          </div>
+          {boardsOpen ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+        </button>
+        {boardsOpen && (
+          <div className="px-5 pb-5 grid sm:grid-cols-2 gap-2">
+            {PINTEREST_BOARDS.map((b) => (
+              <div key={b.name} className="flex items-start gap-2 bg-white/[0.03] rounded-xl px-3 py-2.5">
+                <span className="text-red-400 mt-0.5 shrink-0">📌</span>
+                <div>
+                  <div className="text-sm font-semibold text-white">{b.name}</div>
+                  {b.note && <div className="text-xs text-gray-500 mt-0.5">{b.note}</div>}
+                </div>
+                <CopyButton text={b.name} label="Copy" />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Board filter */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <Filter className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+        <button
+          onClick={() => setBoardFilter("all")}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+            boardFilter === "all" ? "bg-white/15 text-white border border-white/20" : "text-gray-500 hover:text-gray-300 border border-transparent hover:border-white/10"
+          }`}
+        >
+          All ({PINTEREST_PINS.length})
+        </button>
+        {uniqueBoards.map((b) => (
+          <button
+            key={b}
+            onClick={() => setBoardFilter(b)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              boardFilter === b ? "bg-red-500/20 text-red-300 border border-red-500/30" : "text-gray-500 hover:text-gray-300 border border-transparent hover:border-white/10"
+            }`}
+          >
+            {b.replace(" Coloring Pages", "").replace(" for Kids", "").replace(" & Worksheets", "")}
+          </button>
+        ))}
+      </div>
+
+      {/* Pin cards */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {filteredPins.map((pin) => (
+          <div key={pin.id} className="bg-white/[0.04] border border-white/10 hover:border-red-500/20 rounded-2xl p-5 flex flex-col gap-3 transition-colors">
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-500/15 text-red-300 border border-red-500/25">
+                <TrendingUp className="w-3 h-3" /> {pin.board}
+              </span>
+              <span className="text-[10px] text-gray-600 font-mono">{pin.id}</span>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Pin Title</div>
+              <div className="text-sm font-bold text-white leading-snug">{pin.title}</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Description</div>
+              <p className="text-xs text-gray-400 leading-relaxed">{pin.description}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                onClick={() => handleCopy(`title-${pin.id}`, pin.title)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                  copiedId === `title-${pin.id}`
+                    ? "bg-green-500/20 text-green-300 border-green-500/30"
+                    : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+                }`}
+              >
+                {copiedId === `title-${pin.id}` ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedId === `title-${pin.id}` ? "Copied!" : "Copy Title"}
+              </button>
+              <button
+                onClick={() => handleCopy(`desc-${pin.id}`, pin.description)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                  copiedId === `desc-${pin.id}`
+                    ? "bg-green-500/20 text-green-300 border-green-500/30"
+                    : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+                }`}
+              >
+                {copiedId === `desc-${pin.id}` ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedId === `desc-${pin.id}` ? "Copied!" : "Copy Description"}
+              </button>
+              <button
+                onClick={() => handleCopy(`both-${pin.id}`, `${pin.title}\n\n${pin.description}`)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                  copiedId === `both-${pin.id}`
+                    ? "bg-green-500/20 text-green-300 border-green-500/30"
+                    : "bg-red-500/15 hover:bg-red-500/25 text-red-300 border-red-500/25"
+                }`}
+              >
+                {copiedId === `both-${pin.id}` ? <CheckCircle className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {copiedId === `both-${pin.id}` ? "Copied!" : "Copy Both"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Daily Pinterest Queue ────────────────────────────────────────────────────
+
+function getTodayPinIndex(): number {
+  const now = new Date();
+  const dayOfYear = Math.floor(
+    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  return dayOfYear % PINTEREST_PINS.length;
+}
+
+function todayDateKey(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getDailyStorageKey(date: string): string {
+  return `pinterest_daily_v1_${date}`;
+}
+
+function getPinStreak(): number {
+  let streak = 0;
+  const today = new Date();
+  for (let i = 1; i <= 60; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = getDailyStorageKey(d.toISOString().split("T")[0]);
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw && JSON.parse(raw).done) { streak++; } else { break; }
+    } catch { break; }
+  }
+  return streak;
+}
+
+function DailyQueueTab() {
+  const [mounted, setMounted]   = useState(false);
+  const [todayIndex, setTodayIndex] = useState(0);
+  const [todayName, setTodayName]   = useState("Today");
+  const [done, setDone]   = useState(false);
+  const [steps, setSteps] = useState({ image: false, title: false, desc: false, pinned: false });
+  const [streak, setStreak] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [history, setHistory] = useState<{ label: string; date: string; done: boolean; isToday: boolean }[]>([]);
+  const [imageMode, setImageMode] = useState<"auto" | "upload">("auto");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const idx  = getTodayPinIndex();
+    const dk   = todayDateKey();
+    const sk   = getDailyStorageKey(dk);
+    const DAY  = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    setTodayIndex(idx);
+    setTodayName(DAY[new Date().getDay()]);
+    setStreak(getPinStreak());
+
+    // Build last-14-days history
+    const hist = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (13 - i));
+      const dateStr = d.toISOString().split("T")[0];
+      const isToday = dateStr === dk;
+      let wasDone = false;
+      try {
+        const raw = localStorage.getItem(getDailyStorageKey(dateStr));
+        if (raw) wasDone = JSON.parse(raw).done ?? false;
+      } catch { /* ignore */ }
+      return { label: DAY[d.getDay()], date: dateStr, done: wasDone, isToday };
+    });
+    setHistory(hist);
+
+    try {
+      const raw = localStorage.getItem(sk);
+      if (raw) {
+        const d = JSON.parse(raw);
+        setDone(d.done ?? false);
+        setSteps(d.steps ?? { image: false, title: false, desc: false, pinned: false });
+      }
+    } catch { /* ignore */ }
+    setMounted(true);
+  }, []);
+
+  const todayPin    = PINTEREST_PINS[todayIndex];
+  const pinImageUrl = `/api/generate-image?template=pinterest&headline=${encodeURIComponent(todayPin.title)}`;
+
+  const persist = (d: boolean, s: typeof steps) => {
+    try { localStorage.setItem(getDailyStorageKey(todayDateKey()), JSON.stringify({ done: d, steps: s, pinId: todayPin.id })); }
+    catch { /* ignore */ }
+  };
+
+  const tickStep = (key: keyof typeof steps) => {
+    const next = { ...steps, [key]: true };
+    setSteps(next);
+    persist(done, next);
+  };
+
+  const handleCopy = async (id: string, text: string, stepKey?: keyof typeof steps) => {
+    try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1800);
+    if (stepKey) tickStep(stepKey);
+  };
+
+  const handleMarkDone = () => {
+    const next = { ...steps, image: true, title: true, desc: true, pinned: true };
+    setSteps(next);
+    setDone(true);
+    setStreak((s) => s + 1);
+    persist(true, next);
+    setHistory((h) => h.map((entry) => entry.isToday ? { ...entry, done: true } : entry));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadedImage(URL.createObjectURL(file));
+    tickStep("image");
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    setUploadedImage(URL.createObjectURL(file));
+    tickStep("image");
+  };
+
+  const allStepsDone = steps.image && steps.title && steps.desc && steps.pinned;
+
+  const upcomingPins = useMemo(() =>
+    Array.from({ length: 6 }, (_, i) => {
+      const pin = PINTEREST_PINS[(todayIndex + i + 1) % PINTEREST_PINS.length];
+      const d   = new Date(); d.setDate(d.getDate() + i + 1);
+      return { pin, label: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()] };
+    }),
+    [todayIndex]
+  );
+
+  if (!mounted) return (
+    <div className="space-y-4 max-w-2xl animate-pulse">
+      <div className="h-8 w-48 bg-white/10 rounded-xl" />
+      <div className="h-64 bg-white/[0.04] border border-white/10 rounded-2xl" />
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-red-400" /> Daily Pin
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">{todayName} · Pin {todayIndex + 1} of {PINTEREST_PINS.length}</p>
+        </div>
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl border ${
+          streak > 0
+            ? "bg-orange-500/10 border-orange-500/25 text-orange-300"
+            : "bg-white/[0.04] border-white/10 text-gray-500"
+        }`}>
+          <Flame className="w-4 h-4" />
+          <span className="font-black text-lg">{streak}</span>
+          <span className="text-xs font-semibold">day streak</span>
+        </div>
+      </div>
+
+      {/* 14-day history tracker */}
+      <div className="bg-white/[0.04] border border-white/10 rounded-2xl px-5 py-4">
+        <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-3">Last 14 days</div>
+        <div className="flex gap-1.5 flex-wrap">
+          {history.map((entry) => (
+            <div key={entry.date} className="flex flex-col items-center gap-1">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border transition-colors ${
+                entry.isToday
+                  ? entry.done
+                    ? "bg-green-500/20 border-green-500/40 text-green-300"
+                    : "bg-red-500/20 border-red-500/40 text-red-300 ring-1 ring-red-400/30"
+                  : entry.done
+                    ? "bg-green-500/15 border-green-500/25 text-green-400"
+                    : "bg-white/[0.03] border-white/10 text-gray-700"
+              }`}>
+                {entry.done ? "✓" : entry.isToday ? "·" : "○"}
+              </div>
+              <span className={`text-[9px] font-semibold ${entry.isToday ? "text-white" : "text-gray-700"}`}>
+                {entry.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Today's pin card */}
+      <div className={`rounded-2xl border p-6 space-y-5 transition-all ${
+        done
+          ? "bg-green-500/[0.05] border-green-500/20"
+          : "bg-white/[0.04] border-red-500/25 ring-1 ring-red-500/10"
+      }`}>
+
+        {/* Board + done badge */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/25">
+            <TrendingUp className="w-3 h-3" /> {todayPin.board}
+          </span>
+          {done && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-green-500/15 text-green-300 border border-green-500/25">
+              <CheckCircle className="w-3 h-3" /> Posted today
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <div className="space-y-1.5">
+          <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Pin Title</div>
+          <div className="text-base font-black text-white leading-snug">{todayPin.title}</div>
+        </div>
+
+        {/* Description */}
+        <div className="space-y-1.5">
+          <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Description</div>
+          <p className="text-sm text-gray-300 leading-relaxed bg-white/[0.03] rounded-xl p-3 border border-white/10">{todayPin.description}</p>
+        </div>
+
+        {/* Step checklist */}
+        <div className="space-y-2">
+          <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Steps</div>
+
+          {/* Step 1 — Image picker */}
+          <div className={`rounded-xl border transition-colors overflow-hidden ${
+            steps.image ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
+          }`}>
+            {/* Header row */}
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                  steps.image ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
+                }`}>
+                  {steps.image ? "✓" : "1"}
+                </span>
+                <div className="text-sm font-semibold text-white">Pin image</div>
+              </div>
+              {/* Mode toggle */}
+              <div className="flex items-center gap-1 bg-white/[0.06] rounded-lg p-1">
+                <button
+                  onClick={() => setImageMode("auto")}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                    imageMode === "auto" ? "bg-red-500/20 text-red-300" : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  Auto
+                </button>
+                <button
+                  onClick={() => setImageMode("upload")}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                    imageMode === "upload" ? "bg-red-500/20 text-red-300" : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  Upload
+                </button>
+              </div>
+            </div>
+
+            {/* Auto mode */}
+            {imageMode === "auto" && (
+              <div className="px-4 pb-4 space-y-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={pinImageUrl}
+                  alt="Pinterest pin"
+                  className="w-full max-w-[180px] h-auto rounded-xl border border-white/10 mx-auto block"
+                />
+                <a
+                  href={pinImageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => tickStep("image")}
+                  className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-semibold bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/25 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open full size — right-click to save
+                </a>
+              </div>
+            )}
+
+            {/* Upload mode */}
+            {imageMode === "upload" && (
+              <div className="px-4 pb-4 space-y-3">
+                {uploadedImage ? (
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={uploadedImage}
+                      alt="Uploaded pin"
+                      className="w-full max-w-[180px] h-auto rounded-xl border border-white/10 mx-auto block"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <a
+                        href={uploadedImage}
+                        download="pinterest-pin.png"
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold bg-green-500/15 hover:bg-green-500/25 text-green-300 border border-green-500/25 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Download
+                      </a>
+                      <button
+                        onClick={() => { setUploadedImage(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                        className="px-3 py-2 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-red-500/30 hover:border-red-500/60 bg-white/[0.02] hover:bg-red-500/[0.05] cursor-pointer transition-colors"
+                  >
+                    <ImageIcon className="w-6 h-6 text-gray-500" />
+                    <div className="text-xs font-semibold text-gray-400">Click or drag image here</div>
+                    <div className="text-[11px] text-gray-600">PNG, JPG — stays local, nothing uploaded</div>
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              </div>
+            )}
+          </div>
+
+          {/* Step 2 — Copy title */}
+          <div className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
+            steps.title ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                steps.title ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
+              }`}>
+                {steps.title ? "✓" : "2"}
+              </span>
+              <div className="text-sm font-semibold text-white">Copy pin title</div>
+            </div>
+            <button
+              onClick={() => handleCopy("title", todayPin.title, "title")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors shrink-0 ${
+                copiedId === "title"
+                  ? "bg-green-500/20 text-green-300 border-green-500/30"
+                  : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+              }`}
+            >
+              {copiedId === "title" ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedId === "title" ? "Copied!" : "Copy Title"}
+            </button>
+          </div>
+
+          {/* Step 3 — Copy description */}
+          <div className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
+            steps.desc ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                steps.desc ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
+              }`}>
+                {steps.desc ? "✓" : "3"}
+              </span>
+              <div className="text-sm font-semibold text-white">Copy description</div>
+            </div>
+            <button
+              onClick={() => handleCopy("desc", todayPin.description, "desc")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors shrink-0 ${
+                copiedId === "desc"
+                  ? "bg-green-500/20 text-green-300 border-green-500/30"
+                  : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+              }`}
+            >
+              {copiedId === "desc" ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedId === "desc" ? "Copied!" : "Copy Description"}
+            </button>
+          </div>
+
+          {/* Step 4 — Open Pinterest */}
+          <div className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
+            steps.pinned ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                steps.pinned ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
+              }`}>
+                {steps.pinned ? "✓" : "4"}
+              </span>
+              <div>
+                <div className="text-sm font-semibold text-white">Create the pin</div>
+                <div className="text-xs text-gray-500">Upload image → paste title + description → select board</div>
+              </div>
+            </div>
+            <a
+              href="https://www.pinterest.com/pin-builder/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => tickStep("pinned")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 transition-colors shrink-0"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Open Pinterest
+            </a>
+          </div>
+        </div>
+
+        {/* Mark done */}
+        {!done && (
+          <button
+            onClick={handleMarkDone}
+            className={`w-full py-3 rounded-xl font-bold text-sm transition-all border ${
+              allStepsDone
+                ? "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400 border-transparent text-white shadow-lg shadow-red-500/20"
+                : "bg-white/[0.04] border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300"
+            }`}
+          >
+            {allStepsDone ? "✓ Mark Today Done — Keep the Streak" : "Mark Done"}
+          </button>
+        )}
+
+        {done && (
+          <div className="text-center py-2 text-green-300 font-semibold text-sm flex items-center justify-center gap-2">
+            <CheckCircle className="w-4 h-4" /> Done for today — come back tomorrow
+          </div>
+        )}
+      </div>
+
+      {/* Coming up */}
+      <div className="space-y-3">
+        <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Coming up</div>
+        <div className="space-y-2">
+          {upcomingPins.map(({ pin, label }) => (
+            <div key={pin.id} className="flex items-start gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3">
+              <div className="text-xs font-black text-gray-600 w-8 shrink-0 pt-0.5">{label}</div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-gray-400 truncate">{pin.title}</div>
+                <div className="text-[10px] text-gray-600 mt-0.5">{pin.board}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PublishingPage() {
-  const [tab, setTab] = useState<Tab>("today");
+  const [tab, setTab] = useState<Tab>("daily");
   const [posts, setPosts] = useState<PostData[]>([]);
   const [statuses, setStatuses] = useState<Record<string, PostStatus>>({});
   const [generating, setGenerating] = useState(false);
@@ -1376,9 +2264,11 @@ export default function PublishingPage() {
   const todayRemaining = todayPosts.filter((p) => !statuses[postKey(p)]?.done).length;
 
   const TABS: { id: Tab; label: string; badge?: number }[] = [
+    { id: "daily", label: "Daily Pin" },
     { id: "today", label: "Today", badge: todayRemaining || undefined },
     { id: "schedule", label: "Schedule", badge: posts.length || undefined },
     { id: "studio", label: "Studio" },
+    { id: "pinterest", label: "All Pins", badge: PINTEREST_PINS.length },
   ];
 
   return (
@@ -1426,6 +2316,9 @@ export default function PublishingPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+
+        {/* ── DAILY PIN ── */}
+        {tab === "daily" && <DailyQueueTab />}
 
         {/* ── TODAY ── */}
         {tab === "today" && (
@@ -1612,6 +2505,9 @@ export default function PublishingPage() {
 
         {/* ── STUDIO ── */}
         {tab === "studio" && <StudioTab />}
+
+        {/* ── PINTEREST ── */}
+        {tab === "pinterest" && <PinterestTab />}
       </div>
     </main>
   );
