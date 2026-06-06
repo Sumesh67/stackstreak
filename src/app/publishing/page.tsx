@@ -1671,139 +1671,323 @@ function PinterestTab() {
 
 // ─── Daily Pinterest Queue ────────────────────────────────────────────────────
 
-function getTodayPinIndex(): number {
-  const now = new Date();
-  const dayOfYear = Math.floor(
-    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  return dayOfYear % PINTEREST_PINS.length;
-}
+const PINS_PER_DAY_KEY = "pinterest_pins_per_day";
+
+type PinState = {
+  done: boolean;
+  steps: { image: boolean; title: boolean; desc: boolean; pinned: boolean };
+};
 
 function todayDateKey(): string {
   return new Date().toISOString().split("T")[0];
 }
 
 function getDailyStorageKey(date: string): string {
-  return `pinterest_daily_v1_${date}`;
+  return `pinterest_daily_v2_${date}`;
+}
+
+function getDayOfYear(): number {
+  const now = new Date();
+  return Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+}
+
+function getTodayPins(pinsPerDay: number): PinterestPin[] {
+  const start = (getDayOfYear() * pinsPerDay) % PINTEREST_PINS.length;
+  return Array.from({ length: pinsPerDay }, (_, i) =>
+    PINTEREST_PINS[(start + i) % PINTEREST_PINS.length]
+  );
+}
+
+function defaultPinState(): PinState {
+  return { done: false, steps: { image: false, title: false, desc: false, pinned: false } };
 }
 
 function getPinStreak(): number {
   let streak = 0;
   const today = new Date();
   for (let i = 1; i <= 60; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
+    const d = new Date(today); d.setDate(d.getDate() - i);
     const key = getDailyStorageKey(d.toISOString().split("T")[0]);
     try {
       const raw = localStorage.getItem(key);
-      if (raw && JSON.parse(raw).done) { streak++; } else { break; }
+      if (!raw) { break; }
+      const data = JSON.parse(raw);
+      const anyDone = Array.isArray(data.pins)
+        ? data.pins.some((p: PinState) => p.done)
+        : (data.done ?? false);
+      if (anyDone) { streak++; } else { break; }
     } catch { break; }
   }
   return streak;
 }
 
-function DailyQueueTab() {
-  const [mounted, setMounted]   = useState(false);
-  const [todayIndex, setTodayIndex] = useState(0);
-  const [todayName, setTodayName]   = useState("Today");
-  const [done, setDone]   = useState(false);
-  const [steps, setSteps] = useState({ image: false, title: false, desc: false, pinned: false });
-  const [streak, setStreak] = useState(0);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [history, setHistory] = useState<{ label: string; date: string; done: boolean; isToday: boolean }[]>([]);
-  const [imageMode, setImageMode] = useState<"auto" | "upload">("auto");
+// ── Per-pin card (self-contained state) ──────────────────────────────────────
+function DailyPinCard({
+  pin, index, state, onUpdate,
+}: {
+  pin: PinterestPin; index: number; state: PinState; onUpdate: (s: PinState) => void;
+}) {
+  const [imageMode, setImageMode]     = useState<"auto" | "upload">("auto");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [copiedId, setCopiedId]       = useState<string | null>(null);
+  const [expanded, setExpanded]       = useState(!state.done);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageUrl = `/api/generate-image?template=pinterest&headline=${encodeURIComponent(pin.title)}`;
+
+  const tick = (key: keyof PinState["steps"]) =>
+    onUpdate({ ...state, steps: { ...state.steps, [key]: true } });
+
+  const handleCopy = async (id: string, text: string, key?: keyof PinState["steps"]) => {
+    try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
+    setCopiedId(id); setTimeout(() => setCopiedId(null), 1800);
+    if (key) tick(key);
+  };
+
+  const handleMarkDone = () => {
+    onUpdate({ done: true, steps: { image: true, title: true, desc: true, pinned: true } });
+    setExpanded(false);
+  };
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    setUploadedImage(URL.createObjectURL(file));
+    tick("image");
+  };
+
+  const s = state.steps;
+
+  return (
+    <div className={`rounded-2xl border transition-all ${
+      state.done ? "bg-green-500/[0.04] border-green-500/20" : "bg-white/[0.04] border-white/10 hover:border-white/20"
+    }`}>
+      {/* Collapsed header */}
+      <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+          state.done ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
+        }`}>
+          {state.done ? "✓" : index + 1}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] text-red-300 font-semibold truncate">{pin.board}</div>
+          <div className="text-sm font-bold text-white truncate">{pin.title}</div>
+        </div>
+        {state.done
+          ? <span className="text-xs text-green-400 font-semibold shrink-0">Posted ✓</span>
+          : <ChevronDown className={`w-4 h-4 text-gray-500 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
+        }
+      </button>
+
+      {/* Expanded body */}
+      {expanded && !state.done && (
+        <div className="px-4 pb-4 space-y-3 border-t border-white/[0.06] pt-3">
+          {/* Description */}
+          <p className="text-xs text-gray-400 leading-relaxed bg-white/[0.03] rounded-xl p-3 border border-white/[0.06]">
+            {pin.description}
+          </p>
+
+          {/* Image */}
+          <div className={`rounded-xl border overflow-hidden transition-colors ${s.image ? "border-green-500/20 bg-green-500/[0.04]" : "border-white/10 bg-white/[0.02]"}`}>
+            <div className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${s.image ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-500"}`}>
+                  {s.image ? "✓" : "1"}
+                </span>
+                <span className="text-xs font-semibold text-white">Image</span>
+              </div>
+              <div className="flex items-center gap-0.5 bg-white/[0.06] rounded-md p-0.5">
+                {(["auto", "upload"] as const).map(m => (
+                  <button key={m} onClick={() => setImageMode(m)} className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-colors ${imageMode === m ? "bg-red-500/20 text-red-300" : "text-gray-500 hover:text-gray-300"}`}>
+                    {m === "auto" ? "Auto" : "Upload"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="px-3 pb-3">
+              {imageMode === "auto" ? (
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imageUrl} alt="" className="w-14 h-20 object-cover rounded-lg border border-white/10 shrink-0" />
+                  <a href={imageUrl} target="_blank" rel="noopener noreferrer" onClick={() => tick("image")}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/25 transition-colors">
+                    <ExternalLink className="w-3 h-3" /> Open &amp; save
+                  </a>
+                </div>
+              ) : uploadedImage ? (
+                <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={uploadedImage} alt="" className="w-14 h-20 object-cover rounded-lg border border-white/10 shrink-0" />
+                  <div className="flex-1 flex gap-2">
+                    <a href={uploadedImage} download className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-semibold bg-green-500/15 text-green-300 border border-green-500/25">
+                      <ExternalLink className="w-3 h-3" /> Download
+                    </a>
+                    <button onClick={() => { setUploadedImage(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                      className="px-2.5 py-2 rounded-lg bg-white/5 text-gray-400 border border-white/10">
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+                  onDragOver={e => e.preventDefault()}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center gap-1.5 py-4 rounded-xl border border-dashed border-red-500/30 hover:border-red-500/60 cursor-pointer transition-colors">
+                  <ImageIcon className="w-5 h-5 text-gray-500" />
+                  <span className="text-xs text-gray-500">Click or drag image</span>
+                </div>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+            </div>
+          </div>
+
+          {/* Action row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={() => handleCopy("t", pin.title, "title")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${copiedId === "t" ? "bg-green-500/20 text-green-300 border-green-500/30" : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"}`}>
+              {copiedId === "t" ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {s.title ? "Title ✓" : "Copy Title"}
+            </button>
+            <button onClick={() => handleCopy("d", pin.description, "desc")}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${copiedId === "d" ? "bg-green-500/20 text-green-300 border-green-500/30" : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"}`}>
+              {copiedId === "d" ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              {s.desc ? "Desc ✓" : "Copy Desc"}
+            </button>
+            <a href="https://www.pinterest.com/pin-builder/" target="_blank" rel="noopener noreferrer" onClick={() => tick("pinned")}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/25 transition-colors">
+              <ExternalLink className="w-3 h-3" /> {s.pinned ? "Pinterest ✓" : "Pin it"}
+            </a>
+            <button onClick={handleMarkDone}
+              className={`ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border transition-all ${
+                (s.image && s.title && s.desc && s.pinned)
+                  ? "bg-green-500/20 hover:bg-green-500/30 text-green-300 border-green-500/30"
+                  : "bg-white/5 hover:bg-white/10 text-gray-400 border-white/10"
+              }`}>
+              <CheckCircle className="w-3 h-3" /> Done
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DailyQueueTab() {
+  const [mounted, setMounted] = useState(false);
+  const [todayName, setTodayName] = useState("Today");
+  const [pinsPerDay, setPinsPerDay] = useState(1);
+  const [pinStates, setPinStates] = useState<PinState[]>([]);
+  const [streak, setStreak] = useState(0);
+  const [history, setHistory] = useState<{ label: string; date: string; total: number; done: number; isToday: boolean }[]>([]);
 
   useEffect(() => {
-    const idx  = getTodayPinIndex();
-    const dk   = todayDateKey();
-    const sk   = getDailyStorageKey(dk);
-    const DAY  = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    setTodayIndex(idx);
+    const DAY = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const dk  = todayDateKey();
     setTodayName(DAY[new Date().getDay()]);
+
+    // Load pinsPerDay preference
+    let ppd = 1;
+    try {
+      const raw = localStorage.getItem(PINS_PER_DAY_KEY);
+      if (raw) ppd = Math.max(1, parseInt(raw, 10) || 1);
+    } catch { /* ignore */ }
+    setPinsPerDay(ppd);
+
+    // Load today's pin states
+    try {
+      const raw = localStorage.getItem(getDailyStorageKey(dk));
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.pins)) {
+          setPinStates(data.pins);
+        }
+      }
+    } catch { /* ignore */ }
+
     setStreak(getPinStreak());
 
-    // Build last-14-days history
+    // Build 14-day history
     const hist = Array.from({ length: 14 }, (_, i) => {
       const d = new Date(); d.setDate(d.getDate() - (13 - i));
       const dateStr = d.toISOString().split("T")[0];
       const isToday = dateStr === dk;
-      let wasDone = false;
+      let doneCount = 0, total = 0;
       try {
         const raw = localStorage.getItem(getDailyStorageKey(dateStr));
-        if (raw) wasDone = JSON.parse(raw).done ?? false;
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (Array.isArray(data.pins)) {
+            total = data.pins.length;
+            doneCount = data.pins.filter((p: PinState) => p.done).length;
+          } else if (data.done) {
+            total = 1; doneCount = 1;
+          }
+        }
       } catch { /* ignore */ }
-      return { label: DAY[d.getDay()], date: dateStr, done: wasDone, isToday };
+      return { label: DAY[d.getDay()], date: dateStr, total, done: doneCount, isToday };
     });
     setHistory(hist);
-
-    try {
-      const raw = localStorage.getItem(sk);
-      if (raw) {
-        const d = JSON.parse(raw);
-        setDone(d.done ?? false);
-        setSteps(d.steps ?? { image: false, title: false, desc: false, pinned: false });
-      }
-    } catch { /* ignore */ }
     setMounted(true);
   }, []);
 
-  const todayPin    = PINTEREST_PINS[todayIndex];
-  const pinImageUrl = `/api/generate-image?template=pinterest&headline=${encodeURIComponent(todayPin.title)}`;
+  const todayPins = useMemo(() => getTodayPins(pinsPerDay), [pinsPerDay]);
 
-  const persist = (d: boolean, s: typeof steps) => {
-    try { localStorage.setItem(getDailyStorageKey(todayDateKey()), JSON.stringify({ done: d, steps: s, pinId: todayPin.id })); }
-    catch { /* ignore */ }
+  // When pinsPerDay changes, reconcile pinStates length
+  useEffect(() => {
+    if (!mounted) return;
+    setPinStates(prev => {
+      const next = todayPins.map((pin, i) =>
+        prev[i] ?? defaultPinState()
+      );
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinsPerDay, mounted]);
+
+  const persistStates = useCallback((states: PinState[], ppd: number) => {
+    try {
+      localStorage.setItem(getDailyStorageKey(todayDateKey()), JSON.stringify({
+        pinsPerDay: ppd,
+        pins: states,
+      }));
+    } catch { /* ignore */ }
+  }, []);
+
+  const handlePinUpdate = useCallback((index: number, next: PinState) => {
+    setPinStates(prev => {
+      const updated = prev.map((s, i) => i === index ? next : s);
+      persistStates(updated, pinsPerDay);
+      // Update today's history dot
+      setHistory(h => h.map(entry =>
+        entry.isToday
+          ? { ...entry, total: updated.length, done: updated.filter(s => s.done).length }
+          : entry
+      ));
+      const allDone = updated.every(s => s.done);
+      if (allDone) setStreak(getPinStreak() + 1);
+      return updated;
+    });
+  }, [pinsPerDay, persistStates]);
+
+  const handleChangePinsPerDay = (ppd: number) => {
+    setPinsPerDay(ppd);
+    try { localStorage.setItem(PINS_PER_DAY_KEY, String(ppd)); } catch { /* ignore */ }
   };
 
-  const tickStep = (key: keyof typeof steps) => {
-    const next = { ...steps, [key]: true };
-    setSteps(next);
-    persist(done, next);
-  };
+  const upcomingPins = useMemo(() => {
+    const startDay = getDayOfYear();
+    return Array.from({ length: 5 }, (_, i) => {
+      const dayOffset = i + 1;
+      const start = ((startDay + dayOffset) * pinsPerDay) % PINTEREST_PINS.length;
+      const pins = Array.from({ length: pinsPerDay }, (_, j) =>
+        PINTEREST_PINS[(start + j) % PINTEREST_PINS.length]
+      );
+      const d = new Date(); d.setDate(d.getDate() + dayOffset);
+      return { pins, label: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()] };
+    });
+  }, [pinsPerDay]);
 
-  const handleCopy = async (id: string, text: string, stepKey?: keyof typeof steps) => {
-    try { await navigator.clipboard.writeText(text); } catch { /* ignore */ }
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 1800);
-    if (stepKey) tickStep(stepKey);
-  };
-
-  const handleMarkDone = () => {
-    const next = { ...steps, image: true, title: true, desc: true, pinned: true };
-    setSteps(next);
-    setDone(true);
-    setStreak((s) => s + 1);
-    persist(true, next);
-    setHistory((h) => h.map((entry) => entry.isToday ? { ...entry, done: true } : entry));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadedImage(URL.createObjectURL(file));
-    tickStep("image");
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    setUploadedImage(URL.createObjectURL(file));
-    tickStep("image");
-  };
-
-  const allStepsDone = steps.image && steps.title && steps.desc && steps.pinned;
-
-  const upcomingPins = useMemo(() =>
-    Array.from({ length: 6 }, (_, i) => {
-      const pin = PINTEREST_PINS[(todayIndex + i + 1) % PINTEREST_PINS.length];
-      const d   = new Date(); d.setDate(d.getDate() + i + 1);
-      return { pin, label: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()] };
-    }),
-    [todayIndex]
-  );
+  const doneCount = pinStates.filter(s => s.done).length;
+  const allDone   = pinStates.length > 0 && doneCount === pinStates.length;
 
   if (!mounted) return (
     <div className="space-y-4 max-w-2xl animate-pulse">
@@ -1816,21 +2000,37 @@ function DailyQueueTab() {
     <div className="space-y-6 max-w-2xl">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-black flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-red-400" /> Daily Pin
+            <TrendingUp className="w-6 h-6 text-red-400" /> Daily Pins
           </h1>
-          <p className="text-gray-400 text-sm mt-1">{todayName} · Pin {todayIndex + 1} of {PINTEREST_PINS.length}</p>
+          <p className="text-gray-400 text-sm mt-1">
+            {todayName} · {doneCount} of {pinsPerDay} posted today
+          </p>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl border ${
-          streak > 0
-            ? "bg-orange-500/10 border-orange-500/25 text-orange-300"
-            : "bg-white/[0.04] border-white/10 text-gray-500"
-        }`}>
-          <Flame className="w-4 h-4" />
-          <span className="font-black text-lg">{streak}</span>
-          <span className="text-xs font-semibold">day streak</span>
+        <div className="flex items-center gap-3">
+          {/* Pins-per-day selector */}
+          <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-xl p-1">
+            <span className="text-[10px] text-gray-500 font-semibold pl-1.5">pins/day</span>
+            {[1, 2, 3, 5].map(n => (
+              <button key={n} onClick={() => handleChangePinsPerDay(n)}
+                className={`w-7 h-7 rounded-lg text-xs font-black transition-colors ${
+                  pinsPerDay === n ? "bg-red-500/25 text-red-300" : "text-gray-500 hover:text-gray-300"
+                }`}>
+                {n}
+              </button>
+            ))}
+          </div>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl border ${
+            streak > 0
+              ? "bg-orange-500/10 border-orange-500/25 text-orange-300"
+              : "bg-white/[0.04] border-white/10 text-gray-500"
+          }`}>
+            <Flame className="w-4 h-4" />
+            <span className="font-black text-lg">{streak}</span>
+            <span className="text-xs font-semibold">day streak</span>
+          </div>
         </div>
       </div>
 
@@ -1838,270 +2038,68 @@ function DailyQueueTab() {
       <div className="bg-white/[0.04] border border-white/10 rounded-2xl px-5 py-4">
         <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-3">Last 14 days</div>
         <div className="flex gap-1.5 flex-wrap">
-          {history.map((entry) => (
+          {history.map((entry) => {
+            const partial = entry.done > 0 && entry.done < entry.total;
+            const allPosted = entry.done > 0 && entry.done >= entry.total;
+            return (
             <div key={entry.date} className="flex flex-col items-center gap-1">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border transition-colors ${
                 entry.isToday
-                  ? entry.done
+                  ? allPosted
                     ? "bg-green-500/20 border-green-500/40 text-green-300"
-                    : "bg-red-500/20 border-red-500/40 text-red-300 ring-1 ring-red-400/30"
-                  : entry.done
+                    : partial
+                      ? "bg-orange-500/20 border-orange-500/40 text-orange-300 ring-1 ring-orange-400/30"
+                      : "bg-red-500/20 border-red-500/40 text-red-300 ring-1 ring-red-400/30"
+                  : allPosted
                     ? "bg-green-500/15 border-green-500/25 text-green-400"
-                    : "bg-white/[0.03] border-white/10 text-gray-700"
+                    : partial
+                      ? "bg-orange-500/10 border-orange-500/20 text-orange-500"
+                      : "bg-white/[0.03] border-white/10 text-gray-700"
               }`}>
-                {entry.done ? "✓" : entry.isToday ? "·" : "○"}
+                {allPosted ? "✓" : partial ? entry.done : entry.isToday ? "·" : "○"}
               </div>
               <span className={`text-[9px] font-semibold ${entry.isToday ? "text-white" : "text-gray-700"}`}>
                 {entry.label}
               </span>
             </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Today's pin cards */}
+      {allDone ? (
+        <div className="flex items-center justify-center gap-2 py-6 rounded-2xl border border-green-500/20 bg-green-500/[0.05] text-green-300 font-semibold text-sm">
+          <CheckCircle className="w-5 h-5" /> All {pinsPerDay} pin{pinsPerDay > 1 ? "s" : ""} posted — come back tomorrow
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {todayPins.map((pin, i) => (
+            <DailyPinCard
+              key={pin.id}
+              pin={pin}
+              index={i}
+              state={pinStates[i] ?? defaultPinState()}
+              onUpdate={(next) => handlePinUpdate(i, next)}
+            />
           ))}
         </div>
-      </div>
-
-      {/* Today's pin card */}
-      <div className={`rounded-2xl border p-6 space-y-5 transition-all ${
-        done
-          ? "bg-green-500/[0.05] border-green-500/20"
-          : "bg-white/[0.04] border-red-500/25 ring-1 ring-red-500/10"
-      }`}>
-
-        {/* Board + done badge */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/25">
-            <TrendingUp className="w-3 h-3" /> {todayPin.board}
-          </span>
-          {done && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-green-500/15 text-green-300 border border-green-500/25">
-              <CheckCircle className="w-3 h-3" /> Posted today
-            </span>
-          )}
-        </div>
-
-        {/* Title */}
-        <div className="space-y-1.5">
-          <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Pin Title</div>
-          <div className="text-base font-black text-white leading-snug">{todayPin.title}</div>
-        </div>
-
-        {/* Description */}
-        <div className="space-y-1.5">
-          <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Description</div>
-          <p className="text-sm text-gray-300 leading-relaxed bg-white/[0.03] rounded-xl p-3 border border-white/10">{todayPin.description}</p>
-        </div>
-
-        {/* Step checklist */}
-        <div className="space-y-2">
-          <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Steps</div>
-
-          {/* Step 1 — Image picker */}
-          <div className={`rounded-xl border transition-colors overflow-hidden ${
-            steps.image ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
-          }`}>
-            {/* Header row */}
-            <div className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                  steps.image ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
-                }`}>
-                  {steps.image ? "✓" : "1"}
-                </span>
-                <div className="text-sm font-semibold text-white">Pin image</div>
-              </div>
-              {/* Mode toggle */}
-              <div className="flex items-center gap-1 bg-white/[0.06] rounded-lg p-1">
-                <button
-                  onClick={() => setImageMode("auto")}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
-                    imageMode === "auto" ? "bg-red-500/20 text-red-300" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                >
-                  Auto
-                </button>
-                <button
-                  onClick={() => setImageMode("upload")}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
-                    imageMode === "upload" ? "bg-red-500/20 text-red-300" : "text-gray-500 hover:text-gray-300"
-                  }`}
-                >
-                  Upload
-                </button>
-              </div>
-            </div>
-
-            {/* Auto mode */}
-            {imageMode === "auto" && (
-              <div className="px-4 pb-4 space-y-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={pinImageUrl}
-                  alt="Pinterest pin"
-                  className="w-full max-w-[180px] h-auto rounded-xl border border-white/10 mx-auto block"
-                />
-                <a
-                  href={pinImageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => tickStep("image")}
-                  className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-semibold bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/25 transition-colors"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> Open full size — right-click to save
-                </a>
-              </div>
-            )}
-
-            {/* Upload mode */}
-            {imageMode === "upload" && (
-              <div className="px-4 pb-4 space-y-3">
-                {uploadedImage ? (
-                  <div className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={uploadedImage}
-                      alt="Uploaded pin"
-                      className="w-full max-w-[180px] h-auto rounded-xl border border-white/10 mx-auto block"
-                    />
-                    <div className="flex gap-2 mt-2">
-                      <a
-                        href={uploadedImage}
-                        download="pinterest-pin.png"
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold bg-green-500/15 hover:bg-green-500/25 text-green-300 border border-green-500/25 transition-colors"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" /> Download
-                      </a>
-                      <button
-                        onClick={() => { setUploadedImage(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                        className="px-3 py-2 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-gray-400 border border-white/10 transition-colors"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={(e) => e.preventDefault()}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-red-500/30 hover:border-red-500/60 bg-white/[0.02] hover:bg-red-500/[0.05] cursor-pointer transition-colors"
-                  >
-                    <ImageIcon className="w-6 h-6 text-gray-500" />
-                    <div className="text-xs font-semibold text-gray-400">Click or drag image here</div>
-                    <div className="text-[11px] text-gray-600">PNG, JPG — stays local, nothing uploaded</div>
-                  </div>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-              </div>
-            )}
-          </div>
-
-          {/* Step 2 — Copy title */}
-          <div className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
-            steps.title ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
-          }`}>
-            <div className="flex items-center gap-3">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                steps.title ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
-              }`}>
-                {steps.title ? "✓" : "2"}
-              </span>
-              <div className="text-sm font-semibold text-white">Copy pin title</div>
-            </div>
-            <button
-              onClick={() => handleCopy("title", todayPin.title, "title")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors shrink-0 ${
-                copiedId === "title"
-                  ? "bg-green-500/20 text-green-300 border-green-500/30"
-                  : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
-              }`}
-            >
-              {copiedId === "title" ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedId === "title" ? "Copied!" : "Copy Title"}
-            </button>
-          </div>
-
-          {/* Step 3 — Copy description */}
-          <div className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
-            steps.desc ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
-          }`}>
-            <div className="flex items-center gap-3">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                steps.desc ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
-              }`}>
-                {steps.desc ? "✓" : "3"}
-              </span>
-              <div className="text-sm font-semibold text-white">Copy description</div>
-            </div>
-            <button
-              onClick={() => handleCopy("desc", todayPin.description, "desc")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors shrink-0 ${
-                copiedId === "desc"
-                  ? "bg-green-500/20 text-green-300 border-green-500/30"
-                  : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
-              }`}
-            >
-              {copiedId === "desc" ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedId === "desc" ? "Copied!" : "Copy Description"}
-            </button>
-          </div>
-
-          {/* Step 4 — Open Pinterest */}
-          <div className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border transition-colors ${
-            steps.pinned ? "bg-green-500/[0.06] border-green-500/20" : "bg-white/[0.03] border-white/10"
-          }`}>
-            <div className="flex items-center gap-3">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                steps.pinned ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400"
-              }`}>
-                {steps.pinned ? "✓" : "4"}
-              </span>
-              <div>
-                <div className="text-sm font-semibold text-white">Create the pin</div>
-                <div className="text-xs text-gray-500">Upload image → paste title + description → select board</div>
-              </div>
-            </div>
-            <a
-              href="https://www.pinterest.com/pin-builder/"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => tickStep("pinned")}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 transition-colors shrink-0"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> Open Pinterest
-            </a>
-          </div>
-        </div>
-
-        {/* Mark done */}
-        {!done && (
-          <button
-            onClick={handleMarkDone}
-            className={`w-full py-3 rounded-xl font-bold text-sm transition-all border ${
-              allStepsDone
-                ? "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400 border-transparent text-white shadow-lg shadow-red-500/20"
-                : "bg-white/[0.04] border-white/10 text-gray-500 hover:border-white/20 hover:text-gray-300"
-            }`}
-          >
-            {allStepsDone ? "✓ Mark Today Done — Keep the Streak" : "Mark Done"}
-          </button>
-        )}
-
-        {done && (
-          <div className="text-center py-2 text-green-300 font-semibold text-sm flex items-center justify-center gap-2">
-            <CheckCircle className="w-4 h-4" /> Done for today — come back tomorrow
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Coming up */}
       <div className="space-y-3">
         <div className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Coming up</div>
         <div className="space-y-2">
-          {upcomingPins.map(({ pin, label }) => (
-            <div key={pin.id} className="flex items-start gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3">
+          {upcomingPins.map(({ pins, label }) => (
+            <div key={label} className="flex items-start gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3">
               <div className="text-xs font-black text-gray-600 w-8 shrink-0 pt-0.5">{label}</div>
-              <div className="min-w-0">
-                <div className="text-xs font-semibold text-gray-400 truncate">{pin.title}</div>
-                <div className="text-[10px] text-gray-600 mt-0.5">{pin.board}</div>
+              <div className="min-w-0 flex-1 space-y-1">
+                {pins.map(pin => (
+                  <div key={pin.id}>
+                    <div className="text-xs font-semibold text-gray-400 truncate">{pin.title}</div>
+                    <div className="text-[10px] text-gray-600">{pin.board}</div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
